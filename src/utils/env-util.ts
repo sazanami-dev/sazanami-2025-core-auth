@@ -2,13 +2,6 @@
 * a wrapper for process.env with type safety and default values
 */
 
-// 環境変数のキー, 型, デフォルト値の定義
-interface EnvType {
-  key: string;
-  type: 'string' | 'number' | 'boolean';
-  default: string | number | boolean;
-}
-
 // 未定義
 export class NotDefinedEnvError extends Error {
   constructor(key: string) {
@@ -26,64 +19,54 @@ export class InvalidEnvTypeError extends Error {
 }
 
 // 定義リスト
-export const envDefinitions: EnvType[] = [
-  {
-    key: 'PORT',
-    type: 'number',
-    default: 3000,
-  },
-]
+const envDefinitions = {
+  PORT: { type: 'number', default: 3000 },
+  NODE_ENV: { type: 'string', default: 'development' },
+}
+
+type EnvConfig = typeof envDefinitions;
+export type EnvKey = keyof EnvConfig;
+type EnvValueType<K extends EnvKey> =
+  EnvConfig[K]['type'] extends 'string' ? string :
+  EnvConfig[K]['type'] extends 'number' ? number :
+  EnvConfig[K]['type'] extends 'boolean' ? boolean : never;
 
 export class EnvUtil {
-
   /**
   * Get environment variable with type safety and default value.
   * @param key The environment variable key.
   * @returns The value of the environment variable, or the default value if not defined.
   */
-  public static get<T>(key: string): T {
-    const definition = envDefinitions.find(def => def.key === key);
-    if (!definition) {
-      throw new NotDefinedEnvError(key);
-    }
+  static get<K extends EnvKey>(key: K): EnvValueType<K> {
+    const { type, default: def } = envDefinitions[key];
+    const raw = process.env[key];
+    if (raw == null) return def as EnvValueType<K>;
 
-    const value = process.env[key];
-    if (value === undefined) {
-      return definition.default as T;
-    }
-    switch (definition.type) {
+    switch (type) {
       case 'string':
-        return value as unknown as T;
+        return raw as EnvValueType<K>;
       case 'number':
-        const num = Number(value);
-        if (isNaN(num)) {
-          throw new InvalidEnvTypeError(key, 'number', value);
+        const n = Number(raw);
+        if (Number.isNaN(n)) {
+          throw new Error(`Env ${key} must be a number, but got "${raw}"`);
         }
-        return num as unknown as T;
+        return n as EnvValueType<K>;
       case 'boolean':
-        if (value.toLowerCase() === 'true') {
-          return true as unknown as T;
-        } else if (value.toLowerCase() === 'false') {
-          return false as unknown as T;
-        } else {
-          throw new InvalidEnvTypeError(key, 'boolean', value);
+        if (raw === 'true' || raw === 'false') {
+          return (raw === 'true') as EnvValueType<K>;
         }
+        throw new Error(`Env ${key} must be a boolean ("true"|"false"), but got "${raw}"`);
       default:
-        throw new Error(`Unsupported type for environment variable ${key}`);
+        throw new Error('unreachable');
     }
   }
-  
+
   /**
-  * Get environment variable without type safety and default value.
+  * Get environment variable without type safety or default value.
   * @param key The environment variable key.
   * @returns The value of the environment variable, or undefined if not defined.
   */
-  public static getUnsafe(key: string): string | undefined {
+  static getUnsafe(key: string): string | undefined {
     return process.env[key];
-  }
-
-  // NODE_ENVがproductionかどうか
-  public static isProduction(): boolean {
-    return process.env.NODE_ENV === 'production';
   }
 }
