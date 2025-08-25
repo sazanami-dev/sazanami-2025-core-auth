@@ -4,8 +4,12 @@ class Logger {
 
   private tags: string[] = [];
 
-  constructor() {
-    this.tags.push('default');
+  constructor(tag?: string) {
+    if (tag) {
+      this.tags.push(tag);
+    } else {
+      this.tags.push('default');
+    }
   }
 
   setTags(tags: string[]) {
