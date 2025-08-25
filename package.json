@@ -1,9 +1,11 @@
 {
   "name": "core-auth",
+  "type": "module",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "dotenv -e .env -- node ./dist/index.js",
+    "dev": "dotenv -e .env.dev -- npx tsx src/index.ts",
     "build": "tsc"
   },
   "author": "rca@sazanami.dev",
@@ -16,6 +18,7 @@
     "cors": "^2.8.5",
     "dotenv-cli": "^10.0.0",
     "express": "^5.1.0",
+    "specifier-resolution-node": "^1.1.4",
     "zod": "^4.1.1"
   },
   "devDependencies": {
@@ -29,6 +32,10 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
+  },
+  "volta": {
+    "node": "22.18.0"
   }
 }
