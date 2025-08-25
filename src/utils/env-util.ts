@@ -18,11 +18,20 @@ export class InvalidEnvTypeError extends Error {
   }
 }
 
+function createEnvConfig<T extends Record<string, { type: 'string' | 'number' | 'boolean'; default: any }>>(config: T) {
+  const keys = Object.keys(config).reduce((acc, key) => {
+    (acc as any)[key] = key;
+    return acc;
+  }, {} as { [K in keyof T]: K });
+
+  return { config, keys };
+}
+
 // 定義リスト
-const envDefinitions = {
+export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   PORT: { type: 'number', default: 3000 },
   NODE_ENV: { type: 'string', default: 'development' },
-}
+});
 
 type EnvConfig = typeof envDefinitions;
 export type EnvKey = keyof EnvConfig;
