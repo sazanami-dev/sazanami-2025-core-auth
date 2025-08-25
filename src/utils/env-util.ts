@@ -31,6 +31,7 @@ function createEnvConfig<T extends Record<string, { type: 'string' | 'number' | 
 export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   PORT: { type: 'number', default: 3000 },
   NODE_ENV: { type: 'string', default: 'development' },
+  PLACEHOLDER_BOOL: { type: 'boolean', default: false }, // 型エラーを吐いてしまうので
 });
 
 type EnvConfig = typeof envDefinitions;
