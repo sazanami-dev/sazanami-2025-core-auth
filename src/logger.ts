@@ -4,15 +4,15 @@ class Logger {
 
   private tags: string[] = [];
 
-  constructor(tag?: string) {
-    if (tag) {
-      this.tags.push(tag);
+  constructor(...tags: string[]) {
+    if (tags.length > 0) {
+      this.tags.push(...tags);
     } else {
       this.tags.push('default');
     }
   }
 
-  setTags(tags: string[]) {
+  setTags(...tags: string[]) {
     this.tags = tags;
   }
 
@@ -22,7 +22,7 @@ class Logger {
 
   getChild(tag: string) {
     const child = new Logger();
-    child.setTags([...this.tags, tag]);
+    child.setTags(...this.tags, tag);
     return child;
   }
 
