@@ -32,6 +32,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   PORT: { type: 'number', default: 3000 },
   NODE_ENV: { type: 'string', default: 'development' },
   PLACEHOLDER_BOOL: { type: 'boolean', default: false }, // 型エラーを吐いてしまうので
+  UID_LENGTH: { type: 'number', default: 8 },
 });
 
 type EnvConfig = typeof envDefinitions;
