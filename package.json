@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "dotenv -e .env -- node ./dist/index.js",
+    "start": "dotenv -e .env -- node -r tsconfig-paths/register --import=specifier-resolution-node/register ./dist/index.js",
     "dev": "dotenv -e .env.dev -- npx tsx src/index.ts",
     "build": "tsc"
   },
@@ -18,10 +18,12 @@
     "cors": "^2.8.5",
     "dotenv-cli": "^10.0.0",
     "express": "^5.1.0",
-    "specifier-resolution-node": "^1.1.4",
+    "extensionless": "^1.9.9",
+    "tsc-alias": "^1.8.16",
     "zod": "^4.1.1"
   },
   "devDependencies": {
+    "@esbuild-plugins/tsconfig-paths": "^0.1.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/chalk": "^0.4.31",
     "@types/cors": "^2.8.19",
@@ -29,6 +31,7 @@
     "@types/node": "^24.3.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "esbuild": "^0.25.9",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
