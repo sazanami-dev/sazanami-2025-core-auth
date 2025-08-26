@@ -7,6 +7,7 @@ import Logger from '@/logger';
 
 export const setupSwagger = (app: Router, logger: Logger) => {
   if (EnvUtil.get(EnvKey.NODE_ENV) === 'production') {
+    logger.info('Running in production mode, Swagger UI is disabled.', 'swagger');
     return; // 本番環境ではSwaggerを有効にしない
   }
 
