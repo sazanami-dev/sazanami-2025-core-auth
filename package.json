@@ -6,6 +6,13 @@
   "scripts": {
     "start": "dotenv -e .env -- node --import=extensionless/register ./dist/index.js",
     "dev": "dotenv -e .env.dev -- npx tsx src/index.ts",
+    "dev:up": "docker compose -f docker-compose.dev.yml up -d",
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
+    "db:generate": "npx prisma generate",
+    "db:push": "npx prisma db push",
+    "db:push:force": "npx prisma db push --accept-data-loss",
+    "db:reset": "npx prisma migrate reset",
+    "db:format": "npx prisma format",
     "build": "tsc && tsc-alias"
   },
   "author": "rca@sazanami.dev",
