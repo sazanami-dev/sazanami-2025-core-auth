@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "dotenv -e .env -- node -r tsconfig-paths/register --import=specifier-resolution-node/register ./dist/index.js",
+    "start": "dotenv -e .env -- node --import=extensionless/register ./dist/index.js",
     "dev": "dotenv -e .env.dev -- npx tsx src/index.ts",
-    "build": "tsc"
+    "build": "tsc && tsc-alias"
   },
   "author": "rca@sazanami.dev",
   "license": "MIT",
