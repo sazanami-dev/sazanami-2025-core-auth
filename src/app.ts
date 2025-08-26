@@ -1,6 +1,6 @@
 import express from 'express';
-import { setupSwagger } from './boot/swagger';
-import Logger from './logger';
+import { setupSwagger } from '@/boot/swagger';
+import Logger from '@/logger';
 
 export const createApp = async () => {
   const app = express();
