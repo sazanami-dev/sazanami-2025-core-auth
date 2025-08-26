@@ -2,7 +2,7 @@ import { createApp } from "./app";
 import Logger from "./logger";
 import { EnvUtil, EnvKey } from "./utils/env-util";
 
-const logger = new Logger('startup');
+const logger = new Logger('boot');
 
 const startServer = async () => {
   try {
