@@ -1,5 +1,4 @@
 import swaggerUi from 'swagger-ui-express';
-import swaggerJSDoc from 'swagger-jsdoc';
 import { Router } from 'express';
 import { EnvUtil, EnvKey } from '@/utils/env-util';
 import { registry } from '@/openapi-registry';
