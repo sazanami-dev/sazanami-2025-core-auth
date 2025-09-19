@@ -1,6 +1,6 @@
 import prisma from '@/prisma';
 
-async function verifyAndResolveSessionId(sessionId: string) {
+async function verifySessionIdAndResolveUser(sessionId: string) {
   const user = await prisma.session.findUnique({
     where: {
       id: sessionId
