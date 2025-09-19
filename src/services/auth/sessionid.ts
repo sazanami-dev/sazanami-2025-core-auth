@@ -14,4 +14,4 @@ async function verifySessionIdAndResolveUser(sessionId: string) {
   return user.user;
 }
 
-export { verifyAndResolveSessionId };
+export { verifySessionIdAndResolveUser };
