@@ -33,6 +33,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   NODE_ENV: { type: 'string', default: 'development' },
   PLACEHOLDER_BOOL: { type: 'boolean', default: false }, // 型エラーを吐いてしまうので
   UID_LENGTH: { type: 'number', default: 8 },
+  JWT_SECRET: { type: 'string', default: 'your-secret' },
 });
 
 type EnvConfig = typeof envDefinitions;
