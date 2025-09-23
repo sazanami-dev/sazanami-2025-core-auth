@@ -39,5 +39,5 @@ export const setupMiddlewares = (app: any) => {
   }
 
   app.use(express.json());
-  logger.info('JSON body parser middleware is set up.', 'json'
+  logger.info('JSON body parser middleware is set up.', 'json');
 }
