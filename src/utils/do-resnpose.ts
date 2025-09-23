@@ -1,4 +1,3 @@
-import { ErrorWithCode } from '@/models/errorWithCode';
 import { Response } from 'express';
 import { ZodSchema } from 'zod';
 
@@ -131,15 +130,11 @@ export class DoResponse {
    * @param error - The error object to include in the response (can be Error or ErrorWithCode).
    * @returns Returns the class itself for chaining.
    */
-  static error(error: Error | ErrorWithCode): typeof DoResponse {
+  static error(error: Error): typeof DoResponse {
     const responseBody: Record<string, string> = {
       name: error.name,
       message: error.message,
     };
-
-    if ('code' in error) {
-      responseBody.code = error.code; // Include the code if available
-    }
 
     let statusCode = this.statusCode;
 
