@@ -28,7 +28,20 @@ model RegistrationCode {
 }
 
 model Session {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  id              String            @id @default(cuid())
+  userId          String
+  user            User?             @relation(fields: [userId], references: [id])
+  PendingRedirect PendingRedirect[]
+}
+
+model PendingRedirect {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  redirectUrl String
+  postbackUrl String
+  state       String   @unique
+  used        Boolean  @default(false)
+  expiresAt   DateTime
+  sessionId   String?
+  session     Session? @relation(fields: [sessionId], references: [id])
 }
