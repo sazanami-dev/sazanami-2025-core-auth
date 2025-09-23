@@ -34,6 +34,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   PLACEHOLDER_BOOL: { type: 'boolean', default: false }, // 型エラーを吐いてしまうので
   UID_LENGTH: { type: 'number', default: 8 },
   JWT_SECRET: { type: 'string', default: 'your-secret' },
+  CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
 });
 
 type EnvConfig = typeof envDefinitions;
