@@ -29,7 +29,7 @@ model RegistrationCode {
 
 model Session {
   id              String            @id @default(cuid())
-  userId          String
+  userId          String?
   user            User?             @relation(fields: [userId], references: [id])
   PendingRedirect PendingRedirect[]
 }
