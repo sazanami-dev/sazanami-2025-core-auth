@@ -10,4 +10,12 @@ export const AuthenticateResponseSchema = z.object({
   user: UserSchema,
   token: z.string().openapi({ description: '認証トークン', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }),
   state: z.string().optional().openapi({ description: 'リクエスト時に指定されたstateパラメータ', example: 'random_state' }),
+
 }).openapi({ description: '認証成功時のレスポンス' });
+
+export const InitializeAccountResponseSchema = z.object({
+  redirectTo: z.url().openapi({ description: 'アカウント初期化ページのURL' }),
+  token: z.string().openapi({ description: '暫定トークン', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }),
+  state: z.string().optional().openapi({ description: 'リクエスト時に指定されたstateパラメータ', example: 'random_state' }),
+}).openapi({ description: 'アカウント初期化のレスポンス' });
+
