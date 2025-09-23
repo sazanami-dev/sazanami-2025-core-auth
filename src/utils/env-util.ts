@@ -35,6 +35,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   UID_LENGTH: { type: 'number', default: 8 },
   JWT_SECRET: { type: 'string', default: 'your-secret' },
   CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
+  ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' },
 });
 
 type EnvConfig = typeof envDefinitions;
