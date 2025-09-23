@@ -15,9 +15,16 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(nanoid(8))
-  displayName String?
-  Session     Session[]
+  id               String             @id @default(nanoid(8))
+  displayName      String?
+  Session          Session[]
+  RegistrationCode RegistrationCode[]
+}
+
+model RegistrationCode {
+  code   String @id @default(nanoid(8))
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Session {
