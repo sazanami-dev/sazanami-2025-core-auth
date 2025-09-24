@@ -89,6 +89,15 @@ export class DoResponse {
   }
 
   /**
+   * Set a 300 Redirect response with a Location header.
+   * @param location - The URL to redirect to.
+   * @return Returns the class itself for chaining.
+   */
+  static redirect(location: string): typeof DoResponse {
+    return this.status(300).json({ code: 'REDIRECT', message: 'リダイレクトします', location });
+  }
+
+  /**
    * Sets the HTTP status code for the response.
    * @param code - The HTTP status code to set.
    * @returns Returns the class itself for chaining.
