@@ -94,6 +94,7 @@ export class DoResponse {
    * @return Returns the class itself for chaining.
    */
   static redirect(location: string): typeof DoResponse {
+    this.res.redirect(location);
     return this.status(300).json({ code: 'REDIRECT', message: 'リダイレクトします', location });
   }
 
