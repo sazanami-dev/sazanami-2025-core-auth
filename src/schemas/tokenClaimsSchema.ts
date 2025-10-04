@@ -13,3 +13,5 @@ export const TokenClaimsSchema = z.object({
   jti: z.string().optional(), // JWT ID: Unique identifier for the token
   uid: z.string(), // User ID: Custom claim for user identification
 }).openapi('TokenClaims');
+
+export type TokenClaims = z.infer<typeof TokenClaimsSchema>;
