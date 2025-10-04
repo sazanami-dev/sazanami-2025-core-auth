@@ -23,3 +23,5 @@ async function createPendingRedirect(sessionId: string, redirectUrl?: string, po
   });
   return pendingRedirect;
 }
+
+export { getPendingRedirect, createPendingRedirect };
