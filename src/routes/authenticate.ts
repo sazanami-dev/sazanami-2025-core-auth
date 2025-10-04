@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { DoResponse } from "@/utils/do-resnpose";
 import { createAnonymousSession, verifySessionIdAndResolveUser } from "@/services/auth/session";
+import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
+import { EnvKey, EnvUtil } from "@/utils/env-util";
 
 const router = Router();
 
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
   }
 
   if (!cookies || !cookies.sessionId) {
-    createAnonymousSession().then(session => {
+    await createAnonymousSession().then(session => {
       sessionId = session.id;
     }).then(() => {
       res.cookie('sessionId', sessionId, {
@@ -27,7 +29,11 @@ router.get('/', async (req, res) => {
       });
     });
 
-    // redirect
+    // Save pending redirect
+    await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
+
+    // Redirect to login page
+    return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE)).send();
   }
 
   // todo
