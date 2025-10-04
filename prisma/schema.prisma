@@ -37,11 +37,11 @@ model Session {
 model PendingRedirect {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
-  redirectUrl String
-  postbackUrl String
-  state       String   @unique
+  redirectUrl String?
+  postbackUrl String?
+  state       String?
   used        Boolean  @default(false)
   expiresAt   DateTime
-  sessionId   String?
+  sessionId   String
   session     Session? @relation(fields: [sessionId], references: [id])
 }
