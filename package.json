@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "dotenv -e .env -- node --import=extensionless/register ./dist/index.js",
+    "test": "vitest",
     "dev": "dotenv -e .env.dev -- npx tsx src/index.ts",
     "dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "dev:down": "docker compose -f docker-compose.dev.yml down",
