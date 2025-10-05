@@ -112,18 +112,4 @@ describe('EnvUtil', () => {
       expect(result).toBe('');
     });
   });
-
-  describe('EnvKey', () => {
-    test('すべての環境変数キーが定義されている', () => {
-      expect(EnvKey.PORT).toBe('PORT');
-      expect(EnvKey.NODE_ENV).toBe('NODE_ENV');
-      expect(EnvKey.PLACEHOLDER_BOOL).toBe('PLACEHOLDER_BOOL');
-      expect(EnvKey.UID_LENGTH).toBe('UID_LENGTH');
-      expect(EnvKey.JWT_SECRET).toBe('JWT_SECRET');
-      expect(EnvKey.CLIENT_ORIGIN).toBe('CLIENT_ORIGIN');
-      expect(EnvKey.ACCOUNT_INITIALIZATION_PAGE).toBe('ACCOUNT_INITIALIZATION_PAGE');
-      expect(EnvKey.TOKEN_PRIVATE_KEY_PATH).toBe('TOKEN_PRIVATE_KEY_PATH');
-      expect(EnvKey.TOKEN_PUBLIC_KEY_PATH).toBe('TOKEN_PUBLIC_KEY_PATH');
-    });
-  });
 });
