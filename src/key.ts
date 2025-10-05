@@ -49,10 +49,18 @@ async function analyzeKey(key: string, isPrivate: boolean): Promise<any> {
     fingerprint = hash.match(/.{1,2}/g)?.join(':');
   }
 
-  let algorithm: string;
+  const info: KeyInfo = {
+    type: isPrivate ? 'private' : 'public',
+    keyType: keyObj.asymmetricKeyType as 'rsa' | 'ec',
+    fingerprint,
+    cryptoAlgorithm: '', // to be determined below
+  };
 
   switch (keyObj.asymmetricKeyType) {
     case 'rsa':
+
+      // Determine appropriate RSA signing algorithm based on key size
+
       const modulusLength = details?.modulusLength;
 
       if (!modulusLength) {
@@ -60,50 +68,45 @@ async function analyzeKey(key: string, isPrivate: boolean): Promise<any> {
       }
 
       if (modulusLength >= 4096) {
-        algorithm = 'RS512';
+        info.cryptoAlgorithm = 'RS512';
       } else if (modulusLength >= 2048) {
-        algorithm = 'RS256';
+        info.cryptoAlgorithm = 'RS256';
+      } else if (modulusLength >= 1024) {
+        info.cryptoAlgorithm = 'RS256'; // Minimum recommended
       } else {
-        algorithm = 'RS128';
+        throw new Error(`Unsupported RSA key size: ${modulusLength}`);
       }
+
+      // Set modulusLength in info
+      info.modulusLength = modulusLength;
 
       break;
     case 'ec':
+
+      // Determine appropriate EC signing algorithm based on named curve
+
       const namedCurve = details?.namedCurve;
       if (!namedCurve) {
         throw new Error('Unable to determine EC named curve');
       }
 
       if (namedCurve === 'secp256k1' || namedCurve === 'prime256v1') {
-        algorithm = 'ES256';
+        info.cryptoAlgorithm = 'ES256';
       } else if (namedCurve === 'secp384r1') {
-        algorithm = 'ES384';
+        info.cryptoAlgorithm = 'ES384';
       } else if (namedCurve === 'secp521r1') {
-        algorithm = 'ES512';
+        info.cryptoAlgorithm = 'ES512';
       } else {
         throw new Error(`Unsupported EC named curve: ${namedCurve}`);
       }
+
+      // Set namedCurve in info
+      info.namedCurve = namedCurve;
 
       break;
     default:
       throw new Error(`Unsupported key type: ${keyObj.asymmetricKeyType}`);
   }
-
-  const info: KeyInfo = {
-    type: isPrivate ? 'private' : 'public',
-    keyType: keyObj.asymmetricKeyType as 'rsa' | 'ec',
-    fingerprint,
-    cryptoAlgorithm: algorithm,
-  };
-
-  if (details) {
-    if (keyObj.asymmetricKeyType === 'rsa') {
-      info.modulusLength = details.modulusLength;
-    } else if (keyObj.asymmetricKeyType === 'ec') {
-      info.namedCurve = details.namedCurve;
-    }
-  }
-
   return info;
 }
 
