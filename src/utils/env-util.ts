@@ -36,8 +36,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   JWT_SECRET: { type: 'string', default: 'your-secret' },
   CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
   ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' },
-  TOKEN_PRIVATE_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
-  TOKEN_PUBLIC_KEY_PATH: { type: 'string', default: '/data/key/public.pem' },
+  TOKEN_SIGN_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
 });
 
 type EnvConfig = typeof envDefinitions;
