@@ -1,5 +1,5 @@
 import Logger from "@/logger";
-import { getPublicKey, getPrivateKey } from "@/key";
+import { getPublicKey, getPrivateKey, analyzeKey } from "@/key";
 import { createPublicKey, createPrivateKey, createHash, sign, verify, constants as cryptoConstants } from "node:crypto";
 
 export const testSignKey = async () => {
@@ -40,42 +40,5 @@ export const testSignKey = async () => {
     keyLogger.debug('Error: ' + (error as Error).message);
     throw new Error('Signing key pair test failed');
   }
-}
-
-const analyzeKey = async (key: string, isPrivate: boolean): Promise<KeyInfo> => {
-  // Cryptoモジュールを使って鍵の情報を解析する
-  const keyObj = isPrivate ? createPrivateKey(key) : createPublicKey(key);
-
-  const details = keyObj.asymmetricKeyDetails;
-  let fingerprint: string | undefined;
-  if (!isPrivate) {
-    const der = keyObj.export({ type: 'spki', format: 'der' }) as Buffer;
-    const hash = createHash('sha256').update(der).digest('hex');
-    fingerprint = hash.match(/.{1,2}/g)?.join(':');
-  }
-
-  const info: KeyInfo = {
-    type: isPrivate ? 'private' : 'public',
-    asymmetricKeyType: keyObj.asymmetricKeyType,
-    fingerprint,
-  };
-
-  if (details) {
-    if (keyObj.asymmetricKeyType === 'rsa') {
-      info.modulusLength = details.modulusLength;
-    } else if (keyObj.asymmetricKeyType === 'ec') {
-      info.namedCurve = details.namedCurve;
-    }
-  }
-
-  return info;
-}
-
-interface KeyInfo {
-  type: 'private' | 'public';
-  asymmetricKeyType: string | undefined;
-  modulusLength?: number; // RSA specific
-  namedCurve?: string; // EC specific
-  fingerprint?: string; // SHA-256 fingerprint
 }
 
