@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { DoResponse } from "@utils/do-resnpose";
-import { expect, test, describe, beforeAll, beforeEach, vitest } from 'vitest'
+import { expect, test, describe, beforeEach, vitest } from 'vitest'
 
 describe("DoResponse", () => {
   let res: Response
