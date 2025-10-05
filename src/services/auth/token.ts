@@ -1,21 +1,23 @@
 import { TokenClaims } from "@/schemas/tokenClaimsSchema";
 import jwt from "jsonwebtoken";
-import { getPrivateKey } from "@/key";
 import Logger from "@/logger";
+import { getKey } from "@/key";
 
 // Logger instance for this module
 const logger = new Logger('service', 'auth', 'token');
 
 async function issueToken(payload: TokenClaims) {
-  const privateKey = await getPrivateKey();
+  const signKey = await getKey();
+
   logger.debug('Issuing token for user: ' + payload.sub);
-  return jwt.sign(payload, privateKey, { algorithm: 'RS256' });
+  return jwt.sign(payload, signKey.privateKey, { algorithm: signKey.cryptoAlgorithm });
 }
 
 async function verifyToken(token: string): Promise<TokenClaims | null> {
-  const publicKey = await getPrivateKey();
+  const signKey = await getKey();
   try {
-    const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+    const decoded = jwt.verify(token, signKey.publicKey, { algorithms: [signKey.cryptoAlgorithm] });
+
     logger.debug('Token verified successfully');
     return decoded as TokenClaims;
   } catch (err) {
