@@ -110,4 +110,4 @@ async function analyzeKey(key: string, isPrivate: boolean): Promise<any> {
   return info;
 }
 
-export { getPrivateKey, getPublicKey };
+export { getPrivateKey, getPublicKey, analyzeKey };
