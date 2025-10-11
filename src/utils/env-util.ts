@@ -35,7 +35,8 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   UID_LENGTH: { type: 'number', default: 8 },
   JWT_SECRET: { type: 'string', default: 'your-secret' },
   CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
-  ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' },
+  ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' }, 
+  REAUTHENTICATION_PAGE: { type: 'string', default: 'http://localhost:5173/reauth' },
   TOKEN_SIGN_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
   TOKEN_DEFAULT_EXPIRATION: { type: 'number', default: 60 * 60 * 24 * 1 }, // 1 day
   TOKEN_DEFAULT_ISSUER: { type: 'string', default: 'sazanami-core-auth' },
