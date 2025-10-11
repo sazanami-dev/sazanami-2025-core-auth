@@ -38,3 +38,4 @@ router.get('/', async (req, res) => {
   return DoResponse.init(res).redirect(url.toString()).send();
 });
 
+export default router;

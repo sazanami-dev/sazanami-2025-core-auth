@@ -25,3 +25,5 @@ router.get('/', async (req, res) => {
 router.put('/', async (req, res) => {
   // ユーザー情報を書き換える
 });
+
+export default router;
