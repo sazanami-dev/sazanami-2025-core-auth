@@ -43,5 +43,4 @@ function makeClaimsHelper(userId: string, expiresInSeconds?: number, audience?: 
   return claims;
 }
 
-export { issueToken, verifyToken };
-
+export { issueToken, verifyToken, makeClaimsHelper };
