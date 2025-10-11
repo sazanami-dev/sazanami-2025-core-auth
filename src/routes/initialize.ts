@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { DoResponse } from "@/utils/do-resnpose";
-import { createAnonymousSession, createAuthenticatedSession, isAnonymousSession, verifySessionIdAndResolveUser } from "@/services/auth/session";
+import { createAuthenticatedSession, isAnonymousSession } from "@/services/auth/session";
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
 import { verifyRegCodeAndResolveUser } from "@/services/auth/regCode";
