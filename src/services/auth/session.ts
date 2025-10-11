@@ -32,4 +32,16 @@ async function createAuthenticatedSession(userId: string) {
   return session;
 }
 
-export { verifySessionIdAndResolveUser, createAnonymousSession, createAuthenticatedSession };
+async function isAnonymousSession(sessionId: string) {
+  const session = await prisma.session.findUnique({
+    where: {
+      id: sessionId
+    }
+  });
+  if (!session) {
+    return false;
+  }
+  return !session.userId;
+}
+
+export { verifySessionIdAndResolveUser, createAnonymousSession, createAuthenticatedSession, isAnonymousSession };
