@@ -15,8 +15,8 @@ router.get('/', async (req, res) => {
   const cookies = req.cookies;
   let sessionId: string | undefined;
 
-  if (!(redirectUrl || postbackUrl)) {
-    return DoResponse.init(res).badRequest().errorMessage('Either redirectUrl or postbackUrl query parameter is required').send();
+  if (!redirectUrl) {
+    return DoResponse.init(res).badRequest().errorMessage('redirectUrl query parameter is required').send();
   }
 
   if (!cookies || !cookies.sessionId) {
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 
     // Save pending redirect
     await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
-    
+
     const token = await issueToken(makeClaimsHelper(sessionId!)); // TODO:期限調整するかAudを指定するべきかも(クエリに載せるので)
 
     const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
@@ -47,6 +47,41 @@ router.get('/', async (req, res) => {
   // →認証されていればそのままリダイレクト
   // →認証されていなければQRコードを再度読み取って認証するよう促す
 
+  sessionId = cookies.sessionId as string;
+
+  const user = await verifySessionIdAndResolveUser(sessionId).catch(() => null);
+
+  if (!user) {
+    // Invalid session, clear cookie and restart
+    // TODO
+  }
+
+  const token = await issueToken(makeClaimsHelper(sessionId));
+
+  if (postbackUrl) { // この場合, クライアントはredirectUrlに単に返し、トークンはバックエンドにPOSTする
+    await fetch(postbackUrl!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token,
+        state: state ?? null,
+      }),
+    }).catch(err => {
+      return DoResponse.init(res).badRequest().errorMessage('Failed to post to postbackUrl: ' + err.message).send();
+    });
+
+    return DoResponse.init(res).redirect(redirectUrl).send();
+  }
+
+  // Redirect
+  const url = new URL(redirectUrl);
+  url.searchParams.append('token', token);
+  if (state) {
+    url.searchParams.append('state', state);
+  }
+  return DoResponse.init(res).redirect(url.toString()).send();
 });
 
 export default router;
