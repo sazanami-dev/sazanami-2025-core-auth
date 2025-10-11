@@ -33,13 +33,7 @@ router.get('/', async (req, res) => {
     // Save pending redirect
     await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
 
-    const token = await issueToken(makeClaimsHelper(sessionId!)); // TODO:期限調整するかAudを指定するべきかも(クエリに載せるので)
-
-    const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
-    url.searchParams.append('token', token);
-
-    // Redirect to login page
-    return DoResponse.init(res).redirect(url.toString()).send();
+    return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
 
   // TODO: 実装する
@@ -52,8 +46,8 @@ router.get('/', async (req, res) => {
   const user = await verifySessionIdAndResolveUser(sessionId).catch(() => null);
 
   if (!user) {
-    // Invalid session, clear cookie and restart
-    // TODO
+    await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
+    return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
 
   const token = await issueToken(makeClaimsHelper(sessionId));
