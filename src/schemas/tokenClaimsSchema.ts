@@ -2,7 +2,7 @@ import z from "@/zod";
 
 export const TokenClaimsSchema = z.object({
   // Common Claims
-  sub: z.string(), // Subject: Identifier for the user
+  sub: z.string(), // Subject: Identifier for the session
   iss: z.string(), // Issuer: Issuer of the token
   aud: z.string().optional(), // Audience: Audience for the token
   exp: z.number(), // Expiration Time

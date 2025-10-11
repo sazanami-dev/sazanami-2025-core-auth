@@ -27,12 +27,12 @@ async function verifyToken(token: string): Promise<TokenClaims | null> {
   }
 }
 
-function makeClaimsHelper(userId: string, expiresInSeconds?: number, audience?: string): TokenClaims {
+function makeClaimsHelper(sessionId: string, expiresInSeconds?: number, audience?: string): TokenClaims {
   const now = Math.floor(Date.now() / 1000);
   const exp = now + (expiresInSeconds ?? EnvUtil.get(EnvKey.TOKEN_DEFAULT_EXPIRATION));
   const iss = EnvUtil.get(EnvKey.TOKEN_DEFAULT_ISSUER);
   const claims: TokenClaims = {
-    sub: userId,
+    sub: sessionId,
     iss,
     exp,
     iat: now,
