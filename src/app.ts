@@ -4,6 +4,7 @@ import Logger from '@/logger';
 import { testPsqlConnection } from './boot/test-connection';
 import { setupMiddlewares } from './boot/middlewares';
 import { testSignKey } from './boot/test-sign-key';
+import indexRouter from './routes';
 
 export const createApp = async () => {
   const app = express();
@@ -16,6 +17,9 @@ export const createApp = async () => {
   await testPsqlConnection();
 
   await testSignKey();
+
+  app.use('/', indexRouter);
+  logger.info('Routes have been set up');
 
   return app;
 }
