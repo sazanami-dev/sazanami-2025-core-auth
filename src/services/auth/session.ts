@@ -23,4 +23,13 @@ async function createAnonymousSession() {
   return session;
 }
 
-export { verifySessionIdAndResolveUser, createAnonymousSession };
+async function createAuthenticatedSession(userId: string) {
+  const session = await prisma.session.create({
+    data: {
+      userId,
+    }
+  });
+  return session;
+}
+
+export { verifySessionIdAndResolveUser, createAnonymousSession, createAuthenticatedSession };
