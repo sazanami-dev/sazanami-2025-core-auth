@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DoResponse } from "@/utils/do-resnpose";
 import { createAnonymousSession, verifySessionIdAndResolveUser } from "@/services/auth/session";
-import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
+import { createPendingRedirect } from "@/services/auth/pending-redirect";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 
@@ -36,16 +36,12 @@ router.get('/', async (req, res) => {
     return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
 
-  // TODO: 実装する
-  // セッションIDがある場合はユーザー情報を取得して認証状態を確認
-  // →認証されていればそのままリダイレクト
-  // →認証されていなければQRコードを再度読み取って認証するよう促す
-
   sessionId = cookies.sessionId as string;
 
   const user = await verifySessionIdAndResolveUser(sessionId).catch(() => null);
 
-  if (!user) {
+  if (!user) { // ここにひっかかる場合が想像できないけど...
+    // Save pending redirect
     await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
     return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
