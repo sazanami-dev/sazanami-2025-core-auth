@@ -3,6 +3,7 @@ import { DoResponse } from "@/utils/do-resnpose";
 import { createAnonymousSession, verifySessionIdAndResolveUser } from "@/services/auth/session";
 import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
+import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 
 const router = Router();
 
@@ -31,11 +32,14 @@ router.get('/', async (req, res) => {
 
     // Save pending redirect
     await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
+    
+    const token = await issueToken(makeClaimsHelper(sessionId!)); // TODO:期限調整するかAudを指定するべきかも(クエリに載せるので)
 
-    // TODO: 初期設定用のトークンを発行して何らかの方法で付与する
+    const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
+    url.searchParams.append('token', token);
 
     // Redirect to login page
-    return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE)).send();
+    return DoResponse.init(res).redirect(url.toString()).send();
   }
 
   // TODO: 実装する
