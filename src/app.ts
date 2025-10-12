@@ -5,6 +5,7 @@ import { testPsqlConnection } from './boot/test-connection';
 import { setupMiddlewares } from './boot/middlewares';
 import { testSignKey } from './boot/test-sign-key';
 import indexRouter from './routes';
+import { setupCronJobs } from './boot/cron';
 
 export const createApp = async () => {
   const app = express();
@@ -13,6 +14,8 @@ export const createApp = async () => {
   setupSwagger(app, logger);
 
   setupMiddlewares(app);
+
+  setupCronJobs();
 
   await testPsqlConnection();
 
