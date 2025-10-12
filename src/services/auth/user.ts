@@ -21,10 +21,13 @@ async function getUserWithSessionBySessionId(sessionId: string): Promise<UserWit
     return null;
   }
 
+  const now = new Date();
   const hasPendingRedirect = await prisma.pendingRedirect.findFirst({
     where: {
       sessionId: session.id,
+      expiresAt: { gt: now }
     },
+    orderBy: { createdAt: 'desc' },
   }).then(pr => !!pr);
 
   return {
