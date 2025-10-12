@@ -2,6 +2,7 @@ import Logger from "@/logger";
 import express from "express";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 export const setupMiddlewares = (app: any) => {
   const logger = new Logger('boot', 'midware');
@@ -40,4 +41,7 @@ export const setupMiddlewares = (app: any) => {
 
   app.use(express.json());
   logger.info('JSON body parser middleware is set up.', 'json');
+
+  app.use(cookieParser());
+  logger.info('Cookie parser middleware is set up.', 'cookie');
 }
