@@ -1,8 +1,10 @@
 import prisma from '@/prisma';
 
 async function getPendingRedirect(sessionId: string) {
+  const now = new Date();
   const pendingRedirect = await prisma.pendingRedirect.findFirst({
-    where: { sessionId },
+    where: { sessionId, expiresAt: { gt: now } },
+    orderBy: { createdAt: 'desc' },
   });
 
   return pendingRedirect;
