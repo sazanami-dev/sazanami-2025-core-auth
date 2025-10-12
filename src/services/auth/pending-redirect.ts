@@ -24,4 +24,21 @@ async function createPendingRedirect(sessionId: string, redirectUrl?: string, po
   return pendingRedirect;
 }
 
-export { getPendingRedirect, createPendingRedirect };
+async function deletePendingRedirect(id: string) {
+  await prisma.pendingRedirect.delete({
+    where: { id },
+  });
+}
+
+async function deleteExpiredPendingRedirects() {
+  const now = new Date();
+  return await prisma.pendingRedirect.deleteMany({
+    where: {
+      expiresAt: {
+        lt: now,
+      },
+    },
+  });
+}
+
+export { getPendingRedirect, createPendingRedirect, deletePendingRedirect, deleteExpiredPendingRedirects };
