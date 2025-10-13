@@ -178,7 +178,7 @@ export class DoResponse {
           sc = 500; // Default to 500 if status code is not set
         }
         return api
-          .json({ code: 'UNKNOWN_ERROR_WITH_SPECIFIC_MESSAGE', message })
+          .json({ message })
           .status(sc);
       },
 
