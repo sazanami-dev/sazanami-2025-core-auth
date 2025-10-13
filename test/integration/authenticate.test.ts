@@ -97,7 +97,7 @@ describe('Authenticate with existing valid session', async () => {
           state: 'xyz'
         });
     });
-    test('should save redirectUrl, postbackUrl and state', () => {
+    test('should save redirectUrl, postbackUrl and state', async () => {
       return prisma.pendingRedirect.findFirst({
         where: {
           sessionId: fixtures.sessions.anonSession1.id,
