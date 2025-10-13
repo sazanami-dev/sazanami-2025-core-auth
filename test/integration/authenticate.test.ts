@@ -18,29 +18,101 @@ beforeEach(async () => {
 describe('Authenticate with existing valid session', async () => {
   // 認証済みの場合
   describe('when already authenticated', () => {
+    beforeEach(async () => {
+      await prisma.session.create({
+        data: fixtures.sessions.session1
+      });
+    });
     // postbackUrlがあれば
     describe('with postbackUrl', async () => {
+      let app, response: request.Response, fetchMock: any;
+      beforeEach(async () => {
+        app = await createApp();
+        fetchMock = vitest.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true })
+        } as Response));
+        response = await request(app)
+          .get(AUTHENTICATE_PATH)
+          .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`])
+          .query({
+            redirectUrl: 'https://example.com/redirect',
+            postbackUrl: 'https://example.com/postback',
+            state: 'xyz'
+          });
+      });
       // postbackUrlにトークンとstateをPOSTする
-      describe('should post token and state to postbackUrl', () => {
+      test('should post token and state to postbackUrl', () => {
+        expect(fetchMock).toHaveBeenCalledWith('https://example.com/postback', expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: expect.stringContaining('"token":')
+        }));
+        const body = JSON.parse((fetchMock.mock.calls[0][1] as any).body);
+        expect(body).toHaveProperty('token');
+        expect(body).toHaveProperty('state', 'xyz');
       });
       // redirectUrlにリダイレクトする
-      describe('should redirect to redirectUrl', () => {
+      test('should redirect to redirectUrl', () => {
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe('https://example.com/redirect');
       });
     });
     // postbackUrlがなければ
     describe('without postbackUrl', async () => {
+      let app, response: request.Response;
+      beforeEach(async () => {
+        app = await createApp();
+        response = await request(app)
+          .get(AUTHENTICATE_PATH)
+          .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`])
+          .query({
+            redirectUrl: 'https://example.com/redirect',
+            state: 'xyz'
+          });
+      });
       // redirectUrlにtokenとstateを付与してリダイレクトする
-      describe('should redirect to redirectUrl with token and state', () => {
+      test('should redirect to redirectUrl with token and state', () => {
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toMatch(new RegExp(`^https://example.com/redirect\\?token=.+&state=xyz$`));
       });
     });
   });
   // 匿名セッションの場合
   describe('when anonymous session', async () => {
     // redirectUrlとpostbackUrlとstateを保存する
+    let app, response: request.Response;
+    beforeEach(async () => {
+      await prisma.session.create({
+        data: fixtures.sessions.anonSession1
+      });
+      app = await createApp();
+      response = await request(app)
+        .get(AUTHENTICATE_PATH)
+        .set('Cookie', [`sessionId=${fixtures.sessions.anonSession1.id}`])
+        .query({
+          redirectUrl: 'https://example.com/redirect',
+          postbackUrl: 'https://example.com/postback',
+          state: 'xyz'
+        });
+    });
     test('should save redirectUrl, postbackUrl and state', () => {
+      return prisma.pendingRedirect.findFirst({
+        where: {
+          sessionId: fixtures.sessions.anonSession1.id,
+          redirectUrl: 'https://example.com/redirect',
+          postbackUrl: 'https://example.com/postback',
+          state: 'xyz'
+        }
+      }).then(pending => {
+        expect(pending).not.toBeNull();
+      });
     });
     // 認証ページにリダイレクトする
     test('should redirect to authentication page', () => {
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE));
     });
   });
 });
