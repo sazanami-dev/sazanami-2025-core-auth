@@ -43,6 +43,8 @@ describe('Initialization with valid registration code', async () => {
     const sessionCookie = response.headers['set-cookie'][0].split(';').find((part: string) => part.trim().startsWith('sessionId='));
     expect(sessionCookie).toBeDefined();
   });
+
+  // TODO: 匿名セッションがあったときにPendingRedirectを引き継いだりする挙動をテストする
 });
 
 describe('Initialization with invalid registration code', async () => {
@@ -80,4 +82,3 @@ describe('Initialization with invalid registration code', async () => {
     });
   });
 });
-
