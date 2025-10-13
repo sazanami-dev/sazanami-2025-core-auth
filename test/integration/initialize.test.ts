@@ -1,7 +1,7 @@
 import request from "supertest";
 import { createApp } from "@/app";
 import { EnvUtil, EnvKey } from "@/utils/env-util";
-import { expect, test, beforeAll, beforeEach, afterAll, vitest, describe } from 'vitest';
+import { expect, test, beforeEach, vitest, describe } from 'vitest';
 import { fixtures } from "test/fixtures";
 import prisma from "@/prisma";
 
