@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
 
   const user = await verifySessionIdAndResolveUser(sessionId).catch(() => null);
 
-  if (!user) { // ここにひっかかる場合が想像できないけど...
+  if (!user) { // 匿名セッションのままここに流れてきた場合?
     // Save pending redirect
     await createPendingRedirect(sessionId!, redirectUrl, postbackUrl, state);
     return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
