@@ -16,20 +16,45 @@ beforeEach(async () => {
 
 // すでに有効なセッションを持っている場合
 describe('Authenticate with existing valid session', async () => {
-  // postbackUrlがあれば
-  describe('with postbackUrl', async () => {
-    // postbackUrlにトークンとstateをPOSTする
-    describe('should post token and state to postbackUrl', () => {
+  // 認証済みの場合
+  describe('when already authenticated', () => {
+    // postbackUrlがあれば
+    describe('with postbackUrl', async () => {
+      // postbackUrlにトークンとstateをPOSTする
+      describe('should post token and state to postbackUrl', () => {
+      });
+      // redirectUrlにリダイレクトする
+      describe('should redirect to redirectUrl', () => {
+      });
     });
-    // redirectUrlにリダイレクトする
-    describe('should redirect to redirectUrl', () => {
+    // postbackUrlがなければ
+    describe('without postbackUrl', async () => {
+      // redirectUrlにtokenとstateを付与してリダイレクトする
+      describe('should redirect to redirectUrl with token and state', () => {
+      });
     });
   });
-  // postbackUrlがなければ
-  describe('without postbackUrl', async () => {
-    // redirectUrlにtokenとstateを付与してリダイレクトする
-    describe('should redirect to redirectUrl with token and state', () => {
+  // 匿名セッションの場合
+  describe('when anonymous session', async () => {
+    // redirectUrlとpostbackUrlとstateを保存する
+    test('should save redirectUrl, postbackUrl and state', () => {
     });
+    // 認証ページにリダイレクトする
+    test('should redirect to authentication page', () => {
+    });
+  });
+});
+
+// 有効なセッションを持っていない場合
+describe('Authenticate without valid session', async () => {
+  // anonymousセッションを作成する
+  test('should create an anonymous session', () => {
+  });
+  // redirectUrlとpostbackUrlとstateを保存する
+  test('should save redirectUrl, postbackUrl and state', () => {
+  });
+  // 認証ページにリダイレクトする
+  test('should redirect to authentication page', () => {
   });
 });
 
