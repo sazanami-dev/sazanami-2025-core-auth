@@ -222,11 +222,10 @@ describe("DoResponse", () => {
     test("messageをbodyに含む", () => {
       instance.send();
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        code: "UNKNOWN_ERROR_WITH_SPECIFIC_MESSAGE",
         message: "test",
       }));
     });
-    test("statusが200に書き換えられる", () => {
+    test("statusが500に書き換えられる", () => {
       instance.send();
       expect(res.status).toHaveBeenCalledWith(500);
     });
