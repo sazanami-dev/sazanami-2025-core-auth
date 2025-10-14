@@ -36,4 +36,14 @@ async function getUserWithSessionBySessionId(sessionId: string): Promise<UserWit
   };
 }
 
-export { getUserById, getUserWithSessionBySessionId };
+async function updateUserById(userId: string, data: Partial<User>): Promise<User> {
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId
+    },
+    data: data
+  });
+  return updatedUser;
+}
+
+export { getUserById, getUserWithSessionBySessionId, updateUserById };
