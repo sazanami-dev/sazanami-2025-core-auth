@@ -11,25 +11,87 @@ beforeEach(async () => {
   await prisma.user.create({
     data: fixtures.users.user1
   });
+
+  await prisma.session.create({
+    data: fixtures.sessions.session1
+  });
 });
 
 // 認証済みのセッションを持っている場合
 describe('when having an authenticated session', () => {
-  // ユーザー情報を取得したとき
   describe('when fetching user info', () => {
-    // 正しいユーザー情報が返る
-    test('should return correct user info', async () => {
+    let app, response: request.Response;
+    beforeEach(async () => {
+      app = await createApp();
+      response = await request(app)
+        .get(I_PATH)
+        .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+    });
+    // ユーザーの正しい基本情報が返る
+    test('should return correct basic user info', () => {
+      expect(response.status).toBe(200);
+      const body = response.body;
+      expect(body).toHaveProperty('id', fixtures.users.user1.id);
+      expect(body).toHaveProperty('displayName', fixtures.users.user1.displayName);
     });
     // pendingRedirectが正しく処理される
     describe('should handle pendingRedirect correctly', () => {
-      // 有効期限内のpendigRedirectがあれば、trueを返す
       test('when there is a pendingRedirect within the valid period, should return true', async () => {
+        // 有効期限内のpendingRedirectを作成
+        await prisma.pendingRedirect.create({
+          data: {
+            id: 'pendingRedirect1',
+            sessionId: fixtures.sessions.session1.id,
+            redirectUrl: 'https://example.com/redirect',
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5分後に有効期限
+          }
+        });
+
+        const app = await createApp();
+        const response = await request(app)
+          .get(I_PATH)
+          .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+
+        // Check response
+        expect(response.status).toBe(200);
+        const body = response.body;
+        expect(body).toHaveProperty('hasPendingRedirect', true);
       });
       // 有効期限切れのpendingRedirectがあってもtrueを返さない
       test('when there is an expired pendingRedirect, should not return true', async () => {
+        // 有効期限切れのpendingRedirectを作成
+        await prisma.pendingRedirect.create({
+          data: {
+            id: 'pendingRedirect2',
+            sessionId: fixtures.sessions.session1.id,
+            redirectUrl: 'https://example.com/redirect',
+            createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10分前に作成
+            expiresAt: new Date(Date.now() - 5 * 60 * 1000) // 5分前に有効期限切れ
+          }
+        });
+
+        const app = await createApp();
+        const response = await request(app)
+          .get(I_PATH)
+          .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+
+        // Check response
+        expect(response.status).toBe(200);
+        const body = response.body;
+        expect(body).toHaveProperty('hasPendingRedirect', false);
       });
       // pendingRedirectがなければfalseを返す
       test('when there is no pendingRedirect, should return false', async () => {
+        const app = await createApp();
+        const response = await request(app)
+          .get(I_PATH)
+          .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+
+        // Check response
+        expect(response.status).toBe(200);
+        const body = response.body;
+        expect(body).toHaveProperty('hasPendingRedirect', false);
       });
     });
   });
