@@ -119,14 +119,48 @@ describe('Authenticate with existing valid session', async () => {
 
 // 有効なセッションを持っていない場合
 describe('Authenticate without valid session', async () => {
+  let app, response: request.Response;
+  beforeEach(async () => {
+    app = await createApp();
+    response = await request(app)
+      .get(AUTHENTICATE_PATH)
+      .query({
+        redirectUrl: 'https://example.com/redirect',
+        postbackUrl: 'https://example.com/postback',
+        state: 'xyz'
+      });
+  });
   // anonymousセッションを作成する
-  test('should create an anonymous session', () => {
+  test('should create an anonymous session', async () => {
+    const sessionCookie = response.headers['set-cookie'][0].split(';').find((part: string) => part.trim().startsWith('sessionId='));
+    expect(sessionCookie).toBeDefined();
+    const sessionId = sessionCookie!.split('=')[1];
+    return prisma.session.findUnique({
+      where: { id: sessionId }
+    }).then(session => {
+      expect(session).not.toBeNull();
+      expect(session!.userId).toBeNull();
+    });
   });
   // redirectUrlとpostbackUrlとstateを保存する
-  test('should save redirectUrl, postbackUrl and state', () => {
+  test('should save redirectUrl, postbackUrl and state', async () => {
+    const sessionCookie = response.headers['set-cookie'][0].split(';').find((part: string) => part.trim().startsWith('sessionId='));
+    const sessionId = sessionCookie!.split('=')[1];
+    return prisma.pendingRedirect.findFirst({
+      where: {
+        sessionId: sessionId,
+        redirectUrl: 'https://example.com/redirect',
+        postbackUrl: 'https://example.com/postback',
+        state: 'xyz'
+      }
+    }).then(pending => {
+      expect(pending).not.toBeNull();
+    });
   });
   // 認証ページにリダイレクトする
   test('should redirect to authentication page', () => {
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toBe(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE));
   });
 });
 
