@@ -11,9 +11,9 @@ async function issueToken(payload: TokenClaims) {
   const signKey = await getKey();
 
   logger.debug('Issuing token for user: ' + payload.sub);
-  // Set kid
-  payload.kid = EnvUtil.get(EnvKey.TOKEN_SIGN_KEY_DEFAULT_KID);
-  return jwt.sign(payload, signKey.privateKey, { algorithm: signKey.cryptoAlgorithm });
+  // Include 'kid' in the header
+  const kid = EnvUtil.get(EnvKey.TOKEN_SIGN_KEY_DEFAULT_KID);
+  return jwt.sign(payload, signKey.privateKey, { algorithm: signKey.cryptoAlgorithm, header: { kid, alg: signKey.cryptoAlgorithm } });
 }
 
 async function verifyToken(token: string): Promise<TokenClaims | null> {
