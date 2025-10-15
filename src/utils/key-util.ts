@@ -38,6 +38,12 @@ async function analyzeKey(key: string): Promise<SignKey> {
         throw new Error(`Unsupported RSA key size: ${modulusLength}`);
       }
 
+      // JWK parameters for RSA
+      signKey.jwk = {
+        n: publicKeyObj.export({ format: 'jwk' }).n,
+        e: publicKeyObj.export({ format: 'jwk' }).e,
+      };
+
       // Set modulusLength in info
       signKey.modulusLength = modulusLength;
 
@@ -61,6 +67,13 @@ async function analyzeKey(key: string): Promise<SignKey> {
       } else {
         throw new Error(`Unsupported EC named curve: ${namedCurve}`);
       }
+
+      // JWK parameters for EC
+      signKey.jwk = {
+        crv: publicKeyObj.export({ format: 'jwk' }).crv,
+        x: publicKeyObj.export({ format: 'jwk' }).x,
+        y: publicKeyObj.export({ format: 'jwk' }).y,
+      };
 
       // Set namedCurve in info
       signKey.namedCurve = namedCurve;
