@@ -22,8 +22,9 @@ router.put('/', async (req, res) => {
 
   let updateData: Partial<User>;
   try {
-    updateData = UserSchema.parse(req.body);
+    updateData = UserSchema.partial().parse(req.body);
   } catch (e) {
+    logger.error('Failed to update user', e as string);
     return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
   }
   const updatedUser = await updateUserById(userWithSession!.id, updateData).catch(err => {
