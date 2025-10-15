@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from '@/app';
 import { fixtures } from 'test/fixtures';
-import { expect, test, beforeEach, vitest, describe } from 'vitest';
+import { expect, test, beforeEach, vitest, describe, afterEach } from 'vitest';
 import prisma from '@/prisma';
 
 const I_PATH = '/i';
@@ -15,6 +15,15 @@ beforeEach(async () => {
   await prisma.session.create({
     data: fixtures.sessions.session1
   });
+});
+
+afterEach(async () => {
+  // Clear DB
+  await prisma.pendingRedirect.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
+
+  vitest.clearAllMocks();
 });
 
 // 認証済みのセッションを持っている場合
@@ -102,9 +111,72 @@ describe('when having an authenticated session', () => {
     describe('with correct data', () => {
       // ユーザー情報が更新される
       describe('should update user info', () => {
+        let app, response: request.Response;
+        beforeEach(async () => {
+          app = await createApp();
+          response = await request(app).put(I_PATH).set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]).send({
+            displayName: 'NewDisplayName'
+          });
+        });
+
+        test('response should be correct', () => {
+
+          console.log(response.body);
+          expect(response.status).toBe(200);
+          const body = response.body;
+          expect(body).toHaveProperty('id', fixtures.users.user1.id);
+          expect(body).toHaveProperty('displayName', 'NewDisplayName');
+        });
+
+        test('database should be updated', async () => {
+          const updatedUser = await prisma.user.findUnique({
+            where: { id: fixtures.users.user1.id }
+          });
+
+          expect(updatedUser).not.toBeNull();
+          expect(updatedUser?.displayName).toBe('NewDisplayName');
+        });
       });
-      // 不正なデータの場合
-      describe('with incorrect data', () => {
+      // displayNameとして空文字が渡された場合
+      describe('when displayName is an empty string', async () => {
+        let app, response: request.Response;
+        beforeEach(async () => {
+          app = await createApp();
+          response = await request(app).put(I_PATH).set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]).send({
+            displayName: ''
+          });
+        });
+        test('should return 400 Bad Request', () => {
+          expect(response.status).toBe(400);
+        });
+        test('should not update the database', async () => {
+          const user = await prisma.user.findUnique({
+            where: { id: fixtures.users.user1.id }
+          });
+          expect(user).not.toBeNull();
+          expect(user?.displayName).toBe(fixtures.users.user1.displayName);
+        });
+      });
+      // displayNameとして文字列ではない値が渡された場合
+      describe('when displayName is not a string', async () => {
+        let app, response: request.Response;
+        beforeEach(async () => {
+          app = await createApp();
+          response = await request(app).put(I_PATH).set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]).send({
+            displayName: 12345
+          });
+        });
+
+        test('should return 400 Bad Request', () => {
+          expect(response.status).toBe(400);
+        });
+        test('should not update the database', async () => {
+          const user = await prisma.user.findUnique({
+            where: { id: fixtures.users.user1.id }
+          });
+          expect(user).not.toBeNull();
+          expect(user?.displayName).toBe(fixtures.users.user1.displayName);
+        });
       });
     });
   });
