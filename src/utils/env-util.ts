@@ -40,6 +40,7 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   TOKEN_SIGN_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
   TOKEN_DEFAULT_EXPIRATION: { type: 'number', default: 60 * 60 * 24 * 1 }, // 1 day
   TOKEN_DEFAULT_ISSUER: { type: 'string', default: 'sazanami-core-auth' },
+  TOKEN_SIGN_KEY_DEFAULT_KID: { type: 'string', default: 'default' },
 });
 
 type EnvConfig = typeof envDefinitions;
