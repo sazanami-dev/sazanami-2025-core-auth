@@ -21,15 +21,15 @@ router.get('/', async (_req, res) => {
 
   if (signKey.keyType === 'rsa') {
     jwk = {
-      kty: signKey.cryptoAlgorithm,
-      kid: kid,
+      ...jwk,
+      kty: 'RSA',
       e: signKey.jwk!.e!,
       n: signKey.jwk!.n!,
     };
   } else if (signKey.keyType === 'ec') {
     jwk = {
-      kty: signKey.cryptoAlgorithm,
-      kid: kid,
+      ...jwk,
+      kty: 'EC',
       crv: signKey.jwk!.crv!,
       x: signKey.jwk!.x!,
       y: signKey.jwk!.y!,
