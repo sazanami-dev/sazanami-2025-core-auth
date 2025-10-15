@@ -182,5 +182,5 @@ describe('when having an authenticated session', () => {
   });
 });
 // 認証済みではない場合
-describe('when not authenticated', () => {
+describe.skip('when not authenticated', () => {
 });
