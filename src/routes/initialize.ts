@@ -9,67 +9,6 @@ import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pendi
 
 const router = Router();
 
-/**
- * @swagger
- * /initialize:
- *   get:
- *     summary: Complete account initialization using a registration code.
-     description: >
-       Validates the provided `regCode`, upgrades the caller's session to an authenticated session,
-       and redirects the browser to the account initialization page with a one-time token.
-     tags:
-       - Authentication
-     parameters:
-       - in: query
-         name: regCode
-         required: true
-         schema:
-           type: string
-         description: Registration code issued to the user in advance.
-     responses:
-       "302":
-         description: Redirect to the configured account initialization page with an access token.
-         headers:
-           Set-Cookie:
-             schema:
-               type: string
-             description: Session identifier cookie upgraded to an authenticated session.
-       "200":
-         description: User was already authenticated; no redirect is performed.
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-               required:
-                 - message
-             example:
-               message: OK
-       "400":
-         description: Missing or invalid registration code.
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 message:
-                   type: string
-               required:
-                 - message
-             examples:
-               missing:
-                 summary: Missing regCode
-                 value:
-                   message: regCode query parameter is required
-               invalid:
-                 summary: Invalid regCode
-                 value:
-                   message: Invalid regCode
-       "500":
-         description: Failed to persist the new session or redirect data.
- */
 router.get('/', async (req, res) => {
   // regCodeを受け取ってユーザー初期化処理を開始する
 
