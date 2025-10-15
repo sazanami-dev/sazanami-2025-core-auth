@@ -2,7 +2,7 @@ import request from "supertest";
 import { createApp } from "@/app";
 import { fixtures } from "test/fixtures";
 import prisma from "@/prisma";
-import { expect, test, describe, beforeAll, afterAll, beforeEach, vitest } from "vitest";
+import { expect, test, describe, beforeAll, vitest } from "vitest";
 import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
 
@@ -80,7 +80,7 @@ describe('Issue token', () => {
       const publicKey = jwkToPem(key);
       const decoded = jwt.verify(token, publicKey, { algorithms: [key.alg] }) as any;
 
-      expect(decoded).toBeDefined(); // デコードされているということは検証に成功しているため
+      expect(decoded).toBeDefined();
       expect(decoded).toHaveProperty('sub', fixtures.sessions.session1.id);
     });
   });
@@ -92,7 +92,6 @@ describe('Issue token', () => {
       verifyResponse = await request(app)
         .post(VERIFY_PATH)
         .send({ token });
-
     });
 
     test('should return 200', () => {
