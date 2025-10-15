@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { getKey } from "@/key";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "@/services/auth/token";
 
 const router = Router();
 
@@ -10,9 +9,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Token is required" });
   }
 
-  const signKey = await getKey();
-
-  const verified = jwt.verify(token, signKey.publicKey, { algorithms: [signKey.cryptoAlgorithm] });
+  const verified = await verifyToken(token);
   if (verified) {
     return res.status(200).json({ valid: true, payload: verified });
   } else {
