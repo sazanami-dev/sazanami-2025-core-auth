@@ -37,11 +37,15 @@ async function getUserWithSessionBySessionId(sessionId: string): Promise<UserWit
 }
 
 async function updateUserById(userId: string, data: Partial<User>): Promise<User> {
+  console.log('Updating user:', userId, data);
   const updatedUser = await prisma.user.update({
     where: {
       id: userId
     },
-    data: data
+    data: {
+      ...data,
+      id: userId, // idは更新しないが、Prismaの仕様上必須なので入れておく
+    }
   });
   return updatedUser;
 }
