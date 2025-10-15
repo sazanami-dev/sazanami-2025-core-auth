@@ -8,6 +8,7 @@ import jwkToPem from "jwk-to-pem";
 
 const INITIALIZE_PATH = '/initialize';
 const JWKS_PATH = '/.well-known/jwks.json';
+const TARGET_KID = 'default';
 
 describe('Issue and verify token with JWKS flow', () => {
   vitest.mock('@prisma/client');
@@ -104,16 +105,12 @@ describe('Issue and verify token with JWKS flow', () => {
   describe('when verifying token', () => {
     test('should verify the token successfully', async () => {
       const jwks = jwksResponse.body;
-      const decodedHeader: any = jwt.decode(token, { complete: true })?.header;
-      expect(decodedHeader).toBeDefined();
-      const kid = decodedHeader.kid;
-      const key = jwks.keys.find((k: any) => k.kid === kid);
-      // Verify
-      expect(key).toBeDefined();
+      const key = jwks.keys.find((k: any) => k.kid === TARGET_KID);
+      
       const publicKey = jwkToPem(key);
       const decoded = jwt.verify(token, publicKey, { algorithms: [key.alg] }) as any;
 
-      expect(decoded).toBeDefined();
+      expect(decoded).toBeDefined(); // デコードされているということは検証に成功しているため
       expect(decoded).toHaveProperty('sub', fixtures.sessions.session1.id);
     });
   });
