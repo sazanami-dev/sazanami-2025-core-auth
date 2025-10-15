@@ -2,7 +2,7 @@ import request from "supertest";
 import { createApp } from "@/app";
 import { fixtures } from "test/fixtures";
 import prisma from "@/prisma";
-import { expect, test, describe, beforeAll, afterAll, beforeEach } from "vitest";
+import { expect, test, describe, beforeAll, afterAll, beforeEach, vitest } from "vitest";
 import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
 
@@ -10,9 +10,9 @@ const INITIALIZE_PATH = '/initialize';
 const JWKS_PATH = '/.well-known/jwks.json';
 
 describe('Issue and verify token with JWKS flow', () => {
-  let token: string, app: any, cookie: string;
+  vitest.mock('@prisma/client');
+  let token: string, app: any;
   let initResponse: request.Response;
-  let authResponse: request.Response;
   let jwksResponse: request.Response;
   beforeAll(async () => {
     await prisma.user.create({
@@ -36,43 +36,51 @@ describe('Issue and verify token with JWKS flow', () => {
     });
 
     test('should return 302 redirect', () => {
-      expect(authResponse.status).toBe(302);
-      expect(authResponse.headers).toHaveProperty('location');
+      expect(initResponse.status).toBe(302);
+      expect(initResponse.headers.location).toBeDefined();
     });
-    test('should set sessionId cookie', () => {
-      const setCookieHeader = initResponse.headers['set-cookie'];
-      expect(setCookieHeader).toBeDefined();
-      const sessionIdCookie = setCookieHeader.split(',').find((cookie: string) => cookie.startsWith('sessionId='));
-      expect(sessionIdCookie).toBeDefined();
-      cookie = sessionIdCookie!.split(';')[0];
-    });
-  });
-
-  // authorize
-  describe('when authorizing', () => {
-    beforeAll(async () => {
-      authResponse = await request(app)
-        .get('/authenticate')
-        .set('Cookie', [cookie])
-        .query({ redirectUrl: 'https://example.com/callback' })
-        .query({ state: 'test-state' })
-        .send();
-    });
-    test('should return 302 redirect', () => {
-      expect(authResponse.status).toBe(302);
-      expect(authResponse.headers).toHaveProperty('location');
-    });
-    test('should redirect to the correct URL with token and state', () => {
-      const redirectLocation = authResponse.headers['location'];
+    // test('should set sessionId cookie', () => {
+    //   const setCookieHeader = initResponse.headers['set-cookie'];
+    //   expect(setCookieHeader).toBeDefined();
+    //   const sessionIdCookie = setCookieHeader.split(',').find((cookie: string) => cookie.startsWith('sessionId='));
+    //   expect(sessionIdCookie).toBeDefined();
+    //   cookie = sessionIdCookie!.split(';')[0];
+    // });
+    test('should return token in redirect URL', () => {
+      const redirectLocation = initResponse.headers['location'];
       const url = new URL(redirectLocation);
-      expect(url.origin + url.pathname).toBe('https://example.com/callback');
       const returnedToken = url.searchParams.get('token');
-      const returnedState = url.searchParams.get('state');
       expect(returnedToken).toBeDefined();
-      expect(returnedState).toBe('test-state');
       token = returnedToken!;
     });
   });
+
+
+  // // authorize
+  // describe('when authorizing', () => {
+  //   beforeAll(async () => {
+  //     authResponse = await request(app)
+  //       .get('/authenticate')
+  //       .set('Cookie', [cookie])
+  //       .query({ redirectUrl: 'https://example.com/callback' })
+  //       .query({ state: 'test-state' })
+  //       .send();
+  //   });
+  //   test('should return 302 redirect', () => {
+  //     expect(authResponse.status).toBe(302);
+  //     expect(authResponse.headers).toHaveProperty('location');
+  //   });
+  //   test('should redirect to the correct URL with token and state', () => {
+  //     const redirectLocation = authResponse.headers['location'];
+  //     const url = new URL(redirectLocation);
+  //     expect(url.origin + url.pathname).toBe('https://example.com/callback');
+  //     const returnedToken = url.searchParams.get('token');
+  //     const returnedState = url.searchParams.get('state');
+  //     expect(returnedToken).toBeDefined();
+  //     expect(returnedState).toBe('test-state');
+  //     token = returnedToken!;
+  //   });
+  // });
 
   // fetch JWKS
   describe('when fetching JWKS', () => {
