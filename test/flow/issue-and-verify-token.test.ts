@@ -6,14 +6,14 @@ import { expect, test, describe, beforeAll, afterAll, beforeEach, vitest } from 
 import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
 
-const INITIALIZE_PATH = '/initialize';
+const AUTHENTICATE_PATH = '/authenticate';
 const JWKS_PATH = '/.well-known/jwks.json';
 const TARGET_KID = 'default';
 
 describe('Issue and verify token with JWKS flow', () => {
   vitest.mock('@prisma/client');
   let token: string, app: any;
-  let initResponse: request.Response;
+  let authResponse: request.Response;
   let jwksResponse: request.Response;
   beforeAll(async () => {
     await prisma.user.create({
@@ -27,61 +27,30 @@ describe('Issue and verify token with JWKS flow', () => {
     });
     app = await createApp();
   });
-  // initialzie
-  describe('when initializing', () => {
+
+  // authenticate
+  describe('when authenticating and issuing token', () => {
     beforeAll(async () => {
-      initResponse = await request(app)
-        .get(INITIALIZE_PATH)
-        .query({ regCode: fixtures.registrationCodes.regCode1.code })
-        .send();
+      authResponse = await request(app)
+        .get(AUTHENTICATE_PATH)
+        .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`])
+        .query({
+          redirectUrl: 'https://example.com/callback',
+        }).send();
     });
 
     test('should return 302 redirect', () => {
-      expect(initResponse.status).toBe(302);
-      expect(initResponse.headers.location).toBeDefined();
+      expect(authResponse.status).toBe(302);
+      expect(authResponse.headers).toHaveProperty('location');
     });
-    // test('should set sessionId cookie', () => {
-    //   const setCookieHeader = initResponse.headers['set-cookie'];
-    //   expect(setCookieHeader).toBeDefined();
-    //   const sessionIdCookie = setCookieHeader.split(',').find((cookie: string) => cookie.startsWith('sessionId='));
-    //   expect(sessionIdCookie).toBeDefined();
-    //   cookie = sessionIdCookie!.split(';')[0];
-    // });
-    test('should return token in redirect URL', () => {
-      const redirectLocation = initResponse.headers['location'];
-      const url = new URL(redirectLocation);
-      const returnedToken = url.searchParams.get('token');
-      expect(returnedToken).toBeDefined();
-      token = returnedToken!;
+    test('should have token in redirect URL', () => {
+      const location = authResponse.headers['location'];
+      const url = new URL(location);
+      token = url.searchParams.get('token') || '';
+
+      expect(token).toBeTruthy();
     });
   });
-
-
-  // // authorize
-  // describe('when authorizing', () => {
-  //   beforeAll(async () => {
-  //     authResponse = await request(app)
-  //       .get('/authenticate')
-  //       .set('Cookie', [cookie])
-  //       .query({ redirectUrl: 'https://example.com/callback' })
-  //       .query({ state: 'test-state' })
-  //       .send();
-  //   });
-  //   test('should return 302 redirect', () => {
-  //     expect(authResponse.status).toBe(302);
-  //     expect(authResponse.headers).toHaveProperty('location');
-  //   });
-  //   test('should redirect to the correct URL with token and state', () => {
-  //     const redirectLocation = authResponse.headers['location'];
-  //     const url = new URL(redirectLocation);
-  //     expect(url.origin + url.pathname).toBe('https://example.com/callback');
-  //     const returnedToken = url.searchParams.get('token');
-  //     const returnedState = url.searchParams.get('state');
-  //     expect(returnedToken).toBeDefined();
-  //     expect(returnedState).toBe('test-state');
-  //     token = returnedToken!;
-  //   });
-  // });
 
   // fetch JWKS
   describe('when fetching JWKS', () => {
@@ -106,7 +75,7 @@ describe('Issue and verify token with JWKS flow', () => {
     test('should verify the token successfully', async () => {
       const jwks = jwksResponse.body;
       const key = jwks.keys.find((k: any) => k.kid === TARGET_KID);
-      
+
       const publicKey = jwkToPem(key);
       const decoded = jwt.verify(token, publicKey, { algorithms: [key.alg] }) as any;
 
