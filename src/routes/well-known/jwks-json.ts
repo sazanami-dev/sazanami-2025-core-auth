@@ -6,7 +6,7 @@ import { SignKey } from "@/interfaces/SignKey";
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   const signKey: SignKey = await getKey().catch(err => {
     return DoResponse.init(res).internalServerError().errorMessage('Failed to load key').send();
   });
