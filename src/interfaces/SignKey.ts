@@ -6,5 +6,12 @@ export interface SignKey {
   privateKey: string; // PEM formatted key
   publicKey: string;  // PEM formatted key
   fingerprint: string; // SHA-256 fingerprint of the public key
+  jwk?: {
+    n?: string; // RSA modulus
+    e?: string; // RSA public exponent
+    crv?: string; // EC curve
+    x?: string; // EC x coordinate
+    y?: string; // EC y coordinate
+  };
 }
 
