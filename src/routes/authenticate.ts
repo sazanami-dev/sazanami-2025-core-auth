@@ -48,28 +48,39 @@ router.get('/', async (req, res) => {
 
   const token = await issueToken(makeClaimsHelper(sessionId));
 
-  if (postbackUrl) { // この場合, クライアントはredirectUrlに単に返し、トークンはバックエンドにPOSTする
-    await fetch(postbackUrl!, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        state: state ?? null,
-      }),
-    }).catch(err => {
-      return DoResponse.init(res).badRequest().errorMessage('Failed to post to postbackUrl: ' + err.message).send();
-    });
+  // Validate redirectUrl and postbackUrl
+  try {
+    new URL(redirectUrl);
+    if (postbackUrl) new URL(postbackUrl);
+  } catch (e) {
+    return DoResponse.init(res).badRequest().errorMessage('Invalid redirectUrl').send();
+  }
 
-    return DoResponse.init(res).redirect(redirectUrl).send();
+  // Postback
+  if (postbackUrl) {
+    try {
+      await fetch(postbackUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          state: state ?? null,
+        }),
+      });
+    } catch (e) {
+      return DoResponse.init(res).badRequest().errorMessage('Failed to post to postbackUrl').send();
+    }
   }
 
   // Redirect
   const url = new URL(redirectUrl);
-  url.searchParams.append('token', token);
-  if (state) {
-    url.searchParams.append('state', state);
+  if (!postbackUrl) {
+    url.searchParams.append('token', token);
+    if (state) {
+      url.searchParams.append('state', state);
+    }
   }
   return DoResponse.init(res).redirect(url.toString()).send();
 });
