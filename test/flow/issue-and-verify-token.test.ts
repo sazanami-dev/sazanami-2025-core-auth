@@ -7,10 +7,11 @@ import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
 
 const AUTHENTICATE_PATH = '/authenticate';
+const VERIFY_PATH = '/verify';
 const JWKS_PATH = '/.well-known/jwks.json';
 const TARGET_KID = 'default';
 
-describe('Issue and verify token with JWKS flow', () => {
+describe('Issue token', () => {
   vitest.mock('@prisma/client');
   let token: string, app: any;
   let authResponse: request.Response;
@@ -70,8 +71,8 @@ describe('Issue and verify token with JWKS flow', () => {
     });
   });
 
-  // verify
-  describe('when verifying token', () => {
+  // JWKSで検証
+  describe('when verifying the token using JWKS', async () => {
     test('should verify the token successfully', async () => {
       const jwks = jwksResponse.body;
       const key = jwks.keys.find((k: any) => k.kid === TARGET_KID);
@@ -83,9 +84,26 @@ describe('Issue and verify token with JWKS flow', () => {
       expect(decoded).toHaveProperty('sub', fixtures.sessions.session1.id);
     });
   });
+
+  // verify endpointで検証
+  describe('when verifying the token using /verify endpoint', async () => {
+    let verifyResponse: request.Response;
+    beforeAll(async () => {
+      verifyResponse = await request(app)
+        .post(VERIFY_PATH)
+        .send({ token });
+
+    });
+
+    test('should return 200', () => {
+      expect(verifyResponse.status).toBe(200);
+    });
+
+    test('should return valid true and payload with sub', () => {
+      expect(verifyResponse.body).toHaveProperty('valid', true);
+      expect(verifyResponse.body).toHaveProperty('payload');
+      expect(verifyResponse.body.payload).toHaveProperty('sub', fixtures.sessions.session1.id);
+    });
+  });
 });
 
-// 検証を肩代わりするAPIを使用するフロー
-describe.skip('Issue and verify token with helper API flow', () => {
-  // TODO: 本体を実装してから
-});
