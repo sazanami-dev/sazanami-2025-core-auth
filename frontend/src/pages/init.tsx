@@ -2,14 +2,17 @@ import FloatingBubbles from "@/components/floating-bubble"
 import { Input } from "@heroui/input"
 import { Button } from "@heroui/button"
 import { useState } from "react"
+import { VerifyResponseSchema } from "@/types/api/verify"
+import { TokenClaims } from "@/types/tokenClaims"
 
 export default function InitializePage() {
   // クエリパラメータの取得
   const token = new URLSearchParams(window.location.search).get("token") || ""
 
   // debug(reactive state)
-  const isWaitingVerify = useState<boolean>(true)
-  const isVaidToken = useState<boolean>(false)
+  const [claims, setClaims] = useState<TokenClaims | null>(null)
+  const [isWaitingVerify, setWaitingVerify] = useState<boolean>(true)
+  const [isVaidToken, setVaidToken] = useState<boolean>(false)
 
   // 1 Verity token with api call (POST)
   // Workaround
@@ -23,17 +26,19 @@ export default function InitializePage() {
   })
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
-      // Handle response (e.g., show error if invalid)
-      if (data.valid) {
-        isVaidToken[1](true)
+      console.log("Verify response data:", data)
+      const parsed = VerifyResponseSchema.safeParse(data)
+      if (parsed.success) {
+        setVaidToken(parsed.data.valid)
+        if (parsed.data.valid && parsed.data.payload) {
+          setClaims(parsed.data.payload)
+        }
       } else {
-        isVaidToken[1](false)
+        console.error("Invalid response schema:", parsed.error)
       }
     })
     .catch((error) => {
       console.error("Error verifying token:", error)
-      isWaitingVerify[1](false)
     })
 
 
@@ -70,9 +75,28 @@ export default function InitializePage() {
         <p className="mb-1">[Debug Info]</p>
         Token: {token || "<none>"}
         <br />
-        isWaitingVerify: {isWaitingVerify[0] ? "true" : "false"}
+        isWaitingVerify: {isWaitingVerify ? "true" : "false"}
         <br />
-        isVaidToken: {isVaidToken[0] ? "true" : "false"}
+        isVaidToken: {isVaidToken ? "true" : "false"}
+        <br />
+        {/* Claims:<br /> */}
+        {/* - sub: {claims?.sub || "<none>"}<br /> */}
+        {/* - iss: {claims?.iss || "<none>"}<br /> */}
+        {/* - aud: {claims?.aud || "<none>"}<br /> */}
+        {/* - exp: {claims?.exp || "<none>"}<br /> */}
+        {/* - nbf: {claims?.nbf || "<none>"}<br /> */}
+        {/* - iat: {claims?.iat || "<none>"}<br /> */}
+        {/* - jti: {claims?.jti || "<none>"}<br /> */}
+        {/* - uid: {claims?.uid || "<none>"}<br /> */}
+        {/* show all claims as list */}
+        Claims:
+        <ul>
+          {claims ? Object.entries(claims).map(([key, value]) => (
+            <li key={key} className="pl-2">
+              - {key}: {value?.toString() || "<none>"}
+            </li>
+          )) : "<none>"}
+        </ul>
       </div>
     </div>
   </>
