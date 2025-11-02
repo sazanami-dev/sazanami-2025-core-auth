@@ -6,6 +6,7 @@ dist
 /generated/prisma
 
 .work/
+
 # Logs
 frontend/logs
 frontend/*.log
@@ -14,7 +15,6 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
-frontend/
 frontend/node_modules
 frontend/dist
 frontend/dist-ssr
@@ -29,8 +29,6 @@ frontend/*.ntvs*
 frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
-frontend/
-frontend/
 frontend/pnpm-lock.yaml
 frontend/yarn.lock
 frontend/package-lock.json
