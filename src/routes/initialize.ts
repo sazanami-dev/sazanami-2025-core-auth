@@ -6,8 +6,10 @@ import { EnvKey, EnvUtil } from "@/utils/env-util";
 import { verifyRegCodeAndResolveUser } from "@/services/auth/regCode";
 import { PendingRedirect } from "@prisma/client";
 import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
+import Logger from "@/logger";
 
 const router = Router();
+const logger = new Logger('route', 'initialize');
 
 router.get('/', async (req, res) => {
   // regCodeを受け取ってユーザー初期化処理を開始する
@@ -58,6 +60,8 @@ router.get('/', async (req, res) => {
 
   const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
   url.searchParams.append('token', token);
+
+  logger.info(`Redirecting to account initialization page for user ${user.id}`);
 
   return DoResponse.init(res).redirect(url.toString()).send();
 });
