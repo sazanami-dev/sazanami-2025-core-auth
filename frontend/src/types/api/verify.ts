@@ -7,7 +7,7 @@ export const VerifyRequestSchema = z.object({
 
 export const VerifyResponseSchema = z.object({
   valid: z.boolean(),
-  claims: TokenClaimsSchema.optional(),
+  payload: TokenClaimsSchema.optional(),
 });
 
 export type VerifyRequest = z.infer<typeof VerifyRequestSchema>;
