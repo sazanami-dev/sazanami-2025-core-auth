@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
   });
 
   // 初期設定用トークンを発行し、リダイレクトする
-  const token = await issueToken(makeClaimsHelper(sessionId!));
+  const token = await issueToken(await makeClaimsHelper(sessionId!));
 
   const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
   url.searchParams.append('token', token);
