@@ -14,7 +14,7 @@ export default function InitializePage() {
   // 1 Verity token with api call (POST)
   // Workaround
   const API_BASE_URL = "http://localhost:3000"
-  fetch(`${API_BASE_URL}/veriry`, {
+  fetch(`${API_BASE_URL}/verify`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -23,6 +23,7 @@ export default function InitializePage() {
   })
     .then((res) => res.json())
     .then((data) => {
+      console.log(data);
       // Handle response (e.g., show error if invalid)
       if (data.valid) {
         isVaidToken[1](true)
@@ -65,7 +66,7 @@ export default function InitializePage() {
       </div>
 
       {/* Debug Info */}
-      <div className="fixed bottom-0 left-0 w-full text-left text-xs text-gray-500 mb-2 ml-2">
+      <div className="fixed bottom-0 left-0 w-full text-left text-xs text-gray-500 mb-2 ml-2 pointer-events-none select-none">
         <p className="mb-1">[Debug Info]</p>
         Token: {token || "<none>"}
         <br />
