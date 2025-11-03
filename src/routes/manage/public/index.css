@@ -1,0 +1,103 @@
+/* --- スタイル --- */
+
+/* bodyのデフォルトマージンをリセット */
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+
+/* ヘッダーの配置と最低限のスタイル */
+.auth-header {
+    display: flex; /* 横並び */
+    align-items: center; /* 垂直中央揃え */
+    gap: 8px; /* 要素間の隙間 */
+    padding: 8px; /* 内側の余白 */
+    
+    background-color: #f0f0f0; /* 薄いグレー */
+    border-bottom: 1px solid #ccc; /* 境界線 */
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* 認証ステータスのテキストを太字に */
+#auth-status {
+    font-weight: bold;
+    /* 右側のボタンとの間に隙間を空ける */
+    margin-right: auto; 
+}
+
+/* 2カラムレイアウト */
+.layout-container {
+    display: flex;
+}
+
+/* 左側：メインコンテンツ */
+.main-content {
+    flex: 3;
+    padding: 16px;
+}
+
+/* --- タブレイアウト --- */
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid #aaa;
+}
+
+.tab-button {
+    padding: 8px 12px;
+    border: 1px solid #aaa;
+    border-bottom: none;
+    background-color: #eee;
+    cursor: pointer;
+    margin-right: -1px;
+    appearance: none;
+    font-size: 1em;
+}
+
+.tab-button.active {
+    background-color: #fff;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+    padding: 16px;
+    border: 1px solid #aaa;
+    border-top: none;
+}
+.tab-content.active {
+    display: block;
+}
+/* --- タブここまで --- */
+
+
+/* 右側：ログビュー */
+.log-viewer {
+    flex: 1;
+    background-color: #333;
+    color: #f5f5f5;
+    
+    position: sticky;
+    top: 0; /* JSで調整 */
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.log-viewer h3 {
+    margin: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid #555;
+    background-color: #444;
+    font-size: 1em;
+}
+
+#log-output {
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding: 10px 12px;
+    margin: 0;
+    font-family: monospace;
+    font-size: 0.9em;
+}
