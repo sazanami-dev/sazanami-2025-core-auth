@@ -4,6 +4,7 @@ const modelConfigs = {
   user: {
     label: "User",
     primaryKey: "id",
+    path: "/manage/api/user",
     columns: [
       { key: "id", label: "id" },
       { key: "displayName", label: "displayName" },
@@ -18,6 +19,7 @@ const modelConfigs = {
   registrationCode: {
     label: "Registration Code",
     primaryKey: "code",
+    path: "/manage/api/regCode",
     columns: [
       { key: "code", label: "code" },
       { key: "userId", label: "userId" },
@@ -32,6 +34,7 @@ const modelConfigs = {
   session: {
     label: "Session",
     primaryKey: "id",
+    path: "/manage/api/session",
     columns: [
       { key: "id", label: "id" },
       { key: "userId", label: "userId" },
@@ -46,6 +49,7 @@ const modelConfigs = {
   pendingRedirect: {
     label: "Pending Redirect",
     primaryKey: "id",
+    path: "/manage/api/pending-redirect",
     columns: [
       { key: "id", label: "id" },
       { key: "redirectUrl", label: "redirectUrl" },
@@ -206,13 +210,14 @@ export function initDataViewer(options = {}) {
     return modelConfigs[modelKey] || modelConfigs.user;
   }
 
-  function getEndpoint(modelKey, id) {
-    const base = `/manage/api/${modelKey}`;
-    if (!id) {
-      return base;
-    }
-    return `${base}/${encodeURIComponent(id)}`;
+function getEndpoint(modelKey, id) {
+  const config = getConfig(modelKey);
+  const base = config.path || `/manage/api/${modelKey}`;
+  if (!id) {
+    return base;
   }
+  return `${base}/${encodeURIComponent(id)}`;
+}
 
   function updateNavButtons(activeModel) {
     navButtons.forEach((button) => {
