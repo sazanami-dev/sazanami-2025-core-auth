@@ -31,4 +31,62 @@ router.get("/", (req, res) => {
     });
 });
 
+router.get("/:id", (req, res) => {
+  const userId = req.params.id;
+  prisma.user.findUnique({
+    where: { id: userId },
+  })
+    .then((user) => {
+      if (user) {
+        res.json(user);
+      } else {
+        res.status(404).json({ error: "User not found." });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to fetch user." });
+    });
+});
+
+router.delete("/:id", (req, res) => {
+  const userId = req.params.id;
+  prisma.user.delete({
+    where: { id: userId },
+  })
+    .then(() => {
+      res.status(204).end();
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to delete user." });
+    });
+});
+
+router.put("/:id", (req, res) => {
+  const userId = req.params.id;
+  const { isInitialized, displayName } = req.body;
+  prisma.user.update({
+    where: { id: userId },
+    data: { isInitialized, displayName },
+  })
+    .then((user) => {
+      res.json(user);
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to update user." });
+    });
+});
+
+router.post("/", (req, res) => {
+  const { id, displayName, isInitialized } = req.body;
+  prisma.user.create({
+    data: { id, displayName, isInitialized },
+  })
+    .then((user) => {
+      res.status(201).json(user);
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to create user." });
+    });
+});
+
 export default router;
