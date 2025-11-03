@@ -97,15 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = PAGE_PROVIDED_URL + '/auth.html';
   }
 
-  authCheckButton.addEventListener('click', checkAuthStatus);
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
       const targetTabId = button.getAttribute('data-tab');
-      log(`タブ切り替え: ${targetTabId}`);
-
       tabButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
-
       tabContents.forEach(content => {
         content.classList.remove('active');
         if (content.id === targetTabId) {
@@ -116,4 +112,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await checkAuthStatus();
+  authCheckButton.addEventListener('click', checkAuthStatus);
 });
