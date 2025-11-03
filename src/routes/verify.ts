@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { verifyToken } from "@/services/auth/token";
+import { DoResponse } from "@/utils/do-resnpose";
+import { VerifyResponseSchema } from "@/schemas/request/verifySchema";
 
 const router = Router();
 
@@ -11,9 +13,9 @@ router.post("/", async (req, res) => {
 
   const verified = await verifyToken(token);
   if (verified) {
-    return res.status(200).json({ valid: true, payload: verified });
+    return DoResponse.init(res).ok().validatedJson({ valid: true, payload: verified }, VerifyResponseSchema).send();
   } else {
-    return res.status(200).json({ valid: false });
+    return DoResponse.init(res).ok().validatedJson({ valid: false }, VerifyResponseSchema).send();
   }
 });
 
