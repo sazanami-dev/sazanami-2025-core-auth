@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
     return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
 
-  const token = await issueToken(makeClaimsHelper(sessionId));
+  const token = await issueToken(await makeClaimsHelper(sessionId));
 
   // Validate redirectUrl and postbackUrl
   try {
