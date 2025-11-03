@@ -1,5 +1,5 @@
 import { initEventLog } from "./event-log.js";
-import { initDataViewer } from "./data-viewer.js";
+import { initDataViewers } from "./data-viewer.js";
 
 const header = document.querySelector(".header");
 const logViewer = document.querySelector(".log-viewer");
@@ -125,9 +125,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  const dataViewerController = initDataViewer({ apiCall, log });
-  if (!dataViewerController) {
-    log("warn", "Data viewer controller is not available.");
+  try {
+    initDataViewers({ apiCall, log });
+  } catch (error) {
+    log("error", `Failed to initialize data viewers: ${error.message}`);
   }
 
   const eventLogController = initEventLog({ apiCall, log });

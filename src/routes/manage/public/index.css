@@ -218,13 +218,13 @@ body {
   background-color: #9c27b0;
 }
 
-.data-manager {
+.data-viewer {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.data-nav-bar {
+.data-viewer-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -232,28 +232,9 @@ body {
   justify-content: space-between;
 }
 
-.data-nav {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.data-tab-button {
-  padding: 4px 8px;
-  border: 1px solid #aaa;
-  background-color: #eee;
-  cursor: pointer;
-  font-size: 0.95em;
-}
-
-.data-tab-button.active {
-  background-color: #fff;
-  font-weight: bold;
-}
-
-.data-nav-actions {
-  display: flex;
-  gap: 8px;
+.data-viewer-title {
+  margin: 0;
+  font-size: 1.1em;
 }
 
 .data-content {
@@ -264,7 +245,7 @@ body {
 
 .data-table-wrapper {
   flex: 2;
-  min-width: 300px;
+  min-width: 320px;
   overflow-x: auto;
 }
 
@@ -272,6 +253,10 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95em;
+}
+
+.data-table thead th {
+  white-space: nowrap;
 }
 
 .data-table th,
@@ -282,26 +267,38 @@ body {
   vertical-align: top;
 }
 
-.data-table td:last-child {
+.data-table .actions-cell {
   white-space: nowrap;
+  width: 1%;
+  text-align: center;
 }
 
-.data-empty-state {
-  margin-top: 8px;
+.data-action-button {
+  padding: 2px 6px;
+  font-size: 0.85em;
 }
 
 .data-detail {
   flex: 1;
   min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.data-detail h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
+.data-detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.data-detail-title {
+  margin: 0;
+  font-size: 1em;
 }
 
 .data-detail-field {
-  margin-bottom: 10px;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -326,10 +323,21 @@ body {
 
 .data-detail-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.data-detail-message {
+.data-detail-actions button {
+  padding: 4px 8px;
+  font-size: 0.85em;
+}
+
+.data-empty-state {
   margin-top: 8px;
-  font-size: 0.9em;
+}
+
+.data-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

@@ -21,11 +21,11 @@
     <main class="main-content">
       <nav class="tab-nav">
         <button class="tab-button active" data-tab="home-tab">Home</button>
-        <button class="tab-button" data-tab="settings-tab">Quick actions</button>
-        <button class="tab-button" data-tab="user-tab">User</button>
-        <button class="tab-button" data-tab="session-tab">Session</button>
-        <button class="tab-button" data-tab="regcode-tab">regCode</button>
-        <button class="tab-button" data-tab="table-view-tab">Table View</button>
+        <button class="tab-button" data-tab="settings-tab">Quick Actions</button>
+        <button class="tab-button" data-tab="user-tab">Users</button>
+        <button class="tab-button" data-tab="regcode-tab">Registration Codes</button>
+        <button class="tab-button" data-tab="session-tab">Sessions</button>
+        <button class="tab-button" data-tab="pending-tab">Pending Redirects</button>
         <button class="tab-button" data-tab="event-tab">Events</button>
       </nav>
       <section id="home-tab" class="tab-content active">
@@ -34,53 +34,146 @@
       <section id="settings-tab" class="tab-content">
       </section>
       <section id="user-tab" class="tab-content">
-      </section>
-      <section id="session-tab" class="tab-content">
-      </section>
-      <section id="regcode-tab" class="tab-content">
-      </section>
-      <section id="table-view-tab" class="tab-content">
-        <div class="data-manager">
-          <div class="data-nav-bar">
-            <nav class="data-nav" role="tablist">
-              <button class="data-tab-button active" data-model="user">User</button>
-              <button class="data-tab-button" data-model="registrationCode">Registration Code</button>
-              <button class="data-tab-button" data-model="session">Session</button>
-              <button class="data-tab-button" data-model="pendingRedirect">Pending Redirect</button>
-            </nav>
-            <div class="data-nav-actions">
-              <button id="data-refresh-button" type="button">Refresh</button>
-            </div>
+        <div class="data-viewer" data-model="user">
+          <div class="data-viewer-header">
+            <h3 class="data-viewer-title">Users</h3>
+            <button class="data-refresh-button" type="button">Refresh</button>
           </div>
           <div class="data-content">
             <div class="data-table-wrapper">
               <table class="data-table">
                 <thead>
-                  <tr id="data-table-head"></tr>
+                  <tr class="data-table-head"></tr>
                 </thead>
-                <tbody id="data-table-body">
-                </tbody>
+                <tbody class="data-table-body"></tbody>
               </table>
-              <div id="data-empty-state" class="data-empty-state" hidden>
-                No records.
-              </div>
+              <div class="data-empty-state" hidden>No records.</div>
             </div>
             <div class="data-detail">
-              <h3 id="data-detail-title">Record detail</h3>
-              <form id="data-detail-form">
-                <div id="data-detail-fields"></div>
+              <h4 class="data-detail-title">Detail</h4>
+              <form class="data-detail-form">
+                <div class="data-detail-fields"></div>
                 <div class="data-detail-actions">
-                  <button id="data-detail-submit" type="submit">Update</button>
-                  <button id="data-detail-reset" type="button">Clear</button>
+                  <button class="data-update-button" type="submit" data-action="update">Update</button>
+                  <button class="data-create-button" type="button" data-action="create">Create</button>
+                  <button class="data-delete-button" type="button" data-action="delete">Delete</button>
+                  <button class="data-clear-button" type="button">Clear</button>
                 </div>
               </form>
-              <div id="data-detail-message" class="data-detail-message" hidden></div>
             </div>
           </div>
           <div class="data-pagination">
-            <button id="data-prev-button" type="button">Prev</button>
-            <span id="data-page-info">Page 1 / 1</span>
-            <button id="data-next-button" type="button">Next</button>
+            <button class="data-prev-button" type="button">Prev</button>
+            <span class="data-page-info">Page 1 / 1</span>
+            <button class="data-next-button" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+      <section id="session-tab" class="tab-content">
+        <div class="data-viewer" data-model="session">
+          <div class="data-viewer-header">
+            <h3 class="data-viewer-title">Sessions</h3>
+            <button class="data-refresh-button" type="button">Refresh</button>
+          </div>
+          <div class="data-content">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr class="data-table-head"></tr>
+                </thead>
+                <tbody class="data-table-body"></tbody>
+              </table>
+              <div class="data-empty-state" hidden>No records.</div>
+            </div>
+            <div class="data-detail">
+              <h4 class="data-detail-title">Detail</h4>
+              <form class="data-detail-form">
+                <div class="data-detail-fields"></div>
+                <div class="data-detail-actions">
+                  <button class="data-update-button" type="submit" data-action="update">Update</button>
+                  <button class="data-create-button" type="button" data-action="create">Create</button>
+                  <button class="data-delete-button" type="button" data-action="delete">Delete</button>
+                  <button class="data-clear-button" type="button">Clear</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="data-pagination">
+            <button class="data-prev-button" type="button">Prev</button>
+            <span class="data-page-info">Page 1 / 1</span>
+            <button class="data-next-button" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+      <section id="regcode-tab" class="tab-content">
+        <div class="data-viewer" data-model="registrationCode">
+          <div class="data-viewer-header">
+            <h3 class="data-viewer-title">Registration Codes</h3>
+            <button class="data-refresh-button" type="button">Refresh</button>
+          </div>
+          <div class="data-content">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr class="data-table-head"></tr>
+                </thead>
+                <tbody class="data-table-body"></tbody>
+              </table>
+              <div class="data-empty-state" hidden>No records.</div>
+            </div>
+            <div class="data-detail">
+              <h4 class="data-detail-title">Detail</h4>
+              <form class="data-detail-form">
+                <div class="data-detail-fields"></div>
+                <div class="data-detail-actions">
+                  <button class="data-update-button" type="submit" data-action="update">Update</button>
+                  <button class="data-create-button" type="button" data-action="create">Create</button>
+                  <button class="data-delete-button" type="button" data-action="delete">Delete</button>
+                  <button class="data-clear-button" type="button">Clear</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="data-pagination">
+            <button class="data-prev-button" type="button">Prev</button>
+            <span class="data-page-info">Page 1 / 1</span>
+            <button class="data-next-button" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+      <section id="pending-tab" class="tab-content">
+        <div class="data-viewer" data-model="pendingRedirect">
+          <div class="data-viewer-header">
+            <h3 class="data-viewer-title">Pending Redirects</h3>
+            <button class="data-refresh-button" type="button">Refresh</button>
+          </div>
+          <div class="data-content">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr class="data-table-head"></tr>
+                </thead>
+                <tbody class="data-table-body"></tbody>
+              </table>
+              <div class="data-empty-state" hidden>No records.</div>
+            </div>
+            <div class="data-detail">
+              <h4 class="data-detail-title">Detail</h4>
+              <form class="data-detail-form">
+                <div class="data-detail-fields"></div>
+                <div class="data-detail-actions">
+                  <button class="data-update-button" type="submit" data-action="update">Update</button>
+                  <button class="data-create-button" type="button" data-action="create">Create</button>
+                  <button class="data-delete-button" type="button" data-action="delete">Delete</button>
+                  <button class="data-clear-button" type="button">Clear</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="data-pagination">
+            <button class="data-prev-button" type="button">Prev</button>
+            <span class="data-page-info">Page 1 / 1</span>
+            <button class="data-next-button" type="button">Next</button>
           </div>
         </div>
       </section>

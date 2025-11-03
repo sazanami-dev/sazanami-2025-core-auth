@@ -3,6 +3,7 @@ const PAGE_SIZE = 20;
 const modelConfigs = {
   user: {
     label: "User",
+    pluralLabel: "Users",
     primaryKey: "id",
     path: "/manage/api/user",
     columns: [
@@ -18,6 +19,7 @@ const modelConfigs = {
   },
   registrationCode: {
     label: "Registration Code",
+    pluralLabel: "Registration Codes",
     primaryKey: "code",
     path: "/manage/api/regCode",
     columns: [
@@ -33,6 +35,7 @@ const modelConfigs = {
   },
   session: {
     label: "Session",
+    pluralLabel: "Sessions",
     primaryKey: "id",
     path: "/manage/api/session",
     columns: [
@@ -48,6 +51,7 @@ const modelConfigs = {
   },
   pendingRedirect: {
     label: "Pending Redirect",
+    pluralLabel: "Pending Redirects",
     primaryKey: "id",
     path: "/manage/api/pending-redirect",
     columns: [
@@ -85,58 +89,32 @@ function dateFormatter(value) {
   return date.toLocaleString("ja-JP", { hour12: false });
 }
 
-function setElementDisabled(element, disabled) {
-  if (!element) {
-    return;
-  }
-  element.disabled = Boolean(disabled);
-}
-
-function formatValue(column, record) {
-  const { key, format } = column;
-  const raw = record?.[key];
-  if (format) {
-    try {
-      return format(raw, record);
-    } catch (_error) {
-      return String(raw ?? "");
-    }
-  }
-  if (raw === null || raw === undefined) {
-    return "";
-  }
-  if (typeof raw === "boolean") {
-    return booleanFormatter(raw);
-  }
-  if (raw instanceof Date) {
-    return dateFormatter(raw);
-  }
-  return String(raw);
-}
-
 function buildFieldInput(field) {
   const wrapper = document.createElement("div");
   wrapper.className = "data-detail-field";
+
   const label = document.createElement("label");
   label.textContent = field.label;
-  label.setAttribute("for", `field-${field.key}`);
   wrapper.appendChild(label);
 
   let input;
-  if (field.type === "textarea") {
-    input = document.createElement("textarea");
-  } else if (field.type === "checkbox") {
-    input = document.createElement("input");
-    input.type = "checkbox";
-    input.value = "true";
-  } else if (field.type === "datetime") {
-    input = document.createElement("input");
-    input.type = "datetime-local";
-  } else {
-    input = document.createElement("input");
-    input.type = "text";
+  switch (field.type) {
+    case "textarea":
+      input = document.createElement("textarea");
+      break;
+    case "checkbox":
+      input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = "true";
+      break;
+    case "datetime":
+      input = document.createElement("input");
+      input.type = "datetime-local";
+      break;
+    default:
+      input = document.createElement("input");
+      input.type = "text";
   }
-  input.id = `field-${field.key}`;
   input.dataset.fieldKey = field.key;
   if (field.readOnly) {
     input.readOnly = true;
@@ -146,143 +124,269 @@ function buildFieldInput(field) {
   return { wrapper, input };
 }
 
-export function initDataViewer(options = {}) {
-  const {
-    apiCall,
-    log = () => {},
-    elements = {},
-  } = options;
+class DataViewer {
+  constructor(container, options) {
+    this.container = container;
+    this.apiCall = options.apiCall;
+    this.log = options.log || (() => {});
+    this.modelKey = container.dataset.model || "user";
+    this.config = modelConfigs[this.modelKey] || modelConfigs.user;
 
-  const navButtons = Array.from(
-    elements.navButtons ||
-      document.querySelectorAll(".data-tab-button")
-  );
-  const tableHead =
-    elements.tableHead || document.getElementById("data-table-head");
-  const tableBody =
-    elements.tableBody || document.getElementById("data-table-body");
-  const pageInfo =
-    elements.pageInfo || document.getElementById("data-page-info");
-  const prevButton =
-    elements.prevButton || document.getElementById("data-prev-button");
-  const nextButton =
-    elements.nextButton || document.getElementById("data-next-button");
-  const refreshButton =
-    elements.refreshButton || document.getElementById("data-refresh-button");
-  const emptyState =
-    elements.emptyState || document.getElementById("data-empty-state");
-  const detailTitle =
-    elements.detailTitle || document.getElementById("data-detail-title");
-  const detailForm =
-    elements.detailForm || document.getElementById("data-detail-form");
-  const detailFieldsContainer =
-    elements.detailFieldsContainer ||
-    document.getElementById("data-detail-fields");
-  const detailSubmit =
-    elements.detailSubmit || document.getElementById("data-detail-submit");
-  const detailReset =
-    elements.detailReset || document.getElementById("data-detail-reset");
-  const detailMessage =
-    elements.detailMessage ||
-    document.getElementById("data-detail-message");
+    this.state = {
+      page: 1,
+      totalPages: 1,
+      totalCount: 0,
+      loading: false,
+      records: [],
+      selectedRecord: null,
+    };
 
-  if (!apiCall || typeof apiCall !== "function") {
-    log("error", "Data viewer initialization failed: apiCall is missing.");
-    return null;
-  }
-  if (!tableHead || !tableBody || !pageInfo) {
-    log("warn", "Data viewer initialization skipped: missing required elements.");
-    return null;
+    this.fieldInputs = {};
+    this.fieldConfigs = {};
+
+    this.cacheElements();
+    this.setupFields();
+    this.bindEvents();
+    this.renderTableHead();
+    this.resetDetail();
+    this.loadRecords(1);
   }
 
-  const state = {
-    model: "user",
-    page: 1,
-    totalPages: 1,
-    totalCount: undefined,
-    loading: false,
-    records: [],
-    selectedRecord: null,
-    fieldInputs: {},
-  };
+  cacheElements() {
+    this.titleEl = this.container.querySelector(".data-viewer-title");
+    this.refreshButton = this.container.querySelector(".data-refresh-button");
+    this.tableHead = this.container.querySelector(".data-table-head");
+    this.tableBody = this.container.querySelector(".data-table-body");
+    this.emptyState = this.container.querySelector(".data-empty-state");
+    this.prevButton = this.container.querySelector(".data-prev-button");
+    this.nextButton = this.container.querySelector(".data-next-button");
+    this.pageInfo = this.container.querySelector(".data-page-info");
+    this.detailTitle = this.container.querySelector(".data-detail-title");
+    this.detailForm = this.container.querySelector(".data-detail-form");
+    this.detailFieldsContainer = this.container.querySelector(".data-detail-fields");
+    this.updateButton = this.container.querySelector(".data-update-button");
+    this.createButton = this.container.querySelector(".data-create-button");
+    this.deleteButton = this.container.querySelector(".data-delete-button");
+    this.clearButton = this.container.querySelector(".data-clear-button");
 
-  function getConfig(modelKey) {
-    return modelConfigs[modelKey] || modelConfigs.user;
+    if (this.titleEl) {
+      this.titleEl.textContent = this.config.pluralLabel;
+    }
   }
 
-function getEndpoint(modelKey, id) {
-  const config = getConfig(modelKey);
-  const base = config.path || `/manage/api/${modelKey}`;
-  if (!id) {
-    return base;
+  bindEvents() {
+    if (this.refreshButton) {
+      this.refreshButton.addEventListener("click", () => {
+        if (!this.state.loading) {
+          this.loadRecords(this.state.page);
+        }
+      });
+    }
+    if (this.prevButton) {
+      this.prevButton.addEventListener("click", () => {
+        if (!this.state.loading && this.state.page > 1) {
+          this.loadRecords(this.state.page - 1);
+        }
+      });
+    }
+    if (this.nextButton) {
+      this.nextButton.addEventListener("click", () => {
+        if (!this.state.loading && this.state.page < this.state.totalPages) {
+          this.loadRecords(this.state.page + 1);
+        }
+      });
+    }
+    if (this.detailForm) {
+      this.detailForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!this.state.loading) {
+          this.handleUpdate();
+        }
+      });
+    }
+    if (this.createButton) {
+      this.createButton.addEventListener("click", () => {
+        if (!this.state.loading) {
+          this.handleCreate();
+        }
+      });
+    }
+    if (this.deleteButton) {
+      this.deleteButton.addEventListener("click", () => {
+        if (!this.state.loading) {
+          this.handleDelete();
+        }
+      });
+    }
+    if (this.clearButton) {
+      this.clearButton.addEventListener("click", () => {
+        if (!this.state.loading) {
+          this.resetDetail();
+        }
+      });
+    }
   }
-  return `${base}/${encodeURIComponent(id)}`;
-}
 
-  function updateNavButtons(activeModel) {
-    navButtons.forEach((button) => {
-      if (button.dataset.model === activeModel) {
-        button.classList.add("active");
-      } else {
-        button.classList.remove("active");
-      }
+  setupFields() {
+    if (this.detailTitle) {
+      this.detailTitle.textContent = `${this.config.label} detail`;
+    }
+    if (!this.detailFieldsContainer) {
+      return;
+    }
+    this.detailFieldsContainer.innerHTML = "";
+    this.fieldInputs = {};
+    this.fieldConfigs = {};
+
+    this.config.fields.forEach((field) => {
+      const { wrapper, input } = buildFieldInput(field);
+      this.fieldInputs[field.key] = input;
+      this.fieldConfigs[field.key] = field;
+      this.detailFieldsContainer.appendChild(wrapper);
     });
   }
 
-  function updatePageInfo() {
-    const totalPages = Math.max(1, Number(state.totalPages) || 1);
-    const currentPage = Math.max(1, Number(state.page) || 1);
-    if (state.loading) {
-      pageInfo.textContent = "Loading...";
-    } else {
-      const parts = [`Page ${currentPage} / ${totalPages}`];
-      if (Number.isFinite(state.totalCount)) {
-        parts.push(`(${state.totalCount} records)`);
-      }
-      pageInfo.textContent = parts.join(" ");
+  renderTableHead() {
+    if (!this.tableHead) {
+      return;
     }
-    setElementDisabled(prevButton, state.loading || currentPage <= 1);
-    setElementDisabled(nextButton, state.loading || currentPage >= totalPages);
-    setElementDisabled(refreshButton, state.loading);
+    this.tableHead.innerHTML = "";
+    [...this.config.columns, { key: "__actions", label: "Actions" }].forEach((column) => {
+      const th = document.createElement("th");
+      th.textContent = column.label;
+      this.tableHead.appendChild(th);
+    });
   }
 
-  function resetDetailForm() {
-    state.selectedRecord = null;
-    if (detailTitle) {
-      detailTitle.textContent = `${getConfig(state.model).label} detail`;
+  setLoading(loading) {
+    this.state.loading = loading;
+    if (this.refreshButton) {
+      this.refreshButton.disabled = loading;
     }
-    if (detailMessage) {
-      detailMessage.hidden = true;
-      detailMessage.textContent = "";
+    if (this.prevButton) {
+      this.prevButton.disabled = loading || this.state.page <= 1;
     }
-    Object.values(state.fieldInputs).forEach((input) => {
+    if (this.nextButton) {
+      this.nextButton.disabled = loading || this.state.page >= this.state.totalPages;
+    }
+    if (this.updateButton) {
+      this.updateButton.disabled = loading || !this.state.selectedRecord;
+    }
+    if (this.createButton) {
+      this.createButton.disabled = loading;
+    }
+    if (this.deleteButton) {
+      this.deleteButton.disabled = loading || !this.state.selectedRecord;
+    }
+    if (this.clearButton) {
+      this.clearButton.disabled = loading;
+    }
+    if (this.detailFieldsContainer) {
+      Object.entries(this.fieldInputs).forEach(([key, input]) => {
+        const fieldConfig = this.fieldConfigs[key];
+        if (fieldConfig?.readOnly) {
+          input.disabled = true;
+        } else {
+          input.disabled = loading ? true : false;
+        }
+      });
+    }
+  }
+
+  updatePageInfo() {
+    if (!this.pageInfo) {
+      return;
+    }
+    const page = Math.max(1, this.state.page);
+    const totalPages = Math.max(1, this.state.totalPages);
+    if (this.state.loading) {
+      this.pageInfo.textContent = "Loading...";
+      return;
+    }
+    const infoParts = [`Page ${page} / ${totalPages}`];
+    if (Number.isFinite(this.state.totalCount)) {
+      infoParts.push(`(${this.state.totalCount} records)`);
+    }
+    this.pageInfo.textContent = infoParts.join(" ");
+  }
+
+  showEmptyState(show, message) {
+    if (!this.emptyState) {
+      return;
+    }
+    this.emptyState.hidden = !show;
+    if (typeof message === "string") {
+      this.emptyState.textContent = message;
+    }
+  }
+
+  formatCell(column, record) {
+    const raw = record?.[column.key];
+    if (column.format) {
+      try {
+        return column.format(raw, record);
+      } catch (_error) {
+        return String(raw ?? "");
+      }
+    }
+    if (raw === null || raw === undefined) {
+      return "";
+    }
+    if (typeof raw === "boolean") {
+      return booleanFormatter(raw);
+    }
+    if (raw instanceof Date) {
+      return dateFormatter(raw);
+    }
+    return String(raw);
+  }
+
+  renderRows(records) {
+    if (!this.tableBody) {
+      return;
+    }
+    this.tableBody.innerHTML = "";
+    records.forEach((record) => {
+      const tr = document.createElement("tr");
+      this.config.columns.forEach((column) => {
+        const td = document.createElement("td");
+        td.textContent = this.formatCell(column, record);
+        tr.appendChild(td);
+      });
+      const actionCell = document.createElement("td");
+      actionCell.className = "actions-cell";
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.textContent = "Edit";
+      editButton.className = "data-action-button";
+      editButton.addEventListener("click", () => this.selectRecord(record));
+      actionCell.appendChild(editButton);
+      tr.appendChild(actionCell);
+      this.tableBody.appendChild(tr);
+    });
+  }
+
+  collectInputValues({ includeReadOnly = false } = {}) {
+    const payload = {};
+    Object.entries(this.fieldInputs).forEach(([key, input]) => {
+      const fieldConfig = this.fieldConfigs[key];
+      if (!includeReadOnly && fieldConfig?.readOnly) {
+        return;
+      }
       if (input.type === "checkbox") {
-        input.checked = false;
+        payload[key] = input.checked;
       } else if (input.type === "datetime-local") {
-        input.value = "";
+        payload[key] = input.value ? new Date(input.value).toISOString() : null;
       } else {
-        input.value = "";
-      }
-      if (input.dataset.readonly === "true") {
-        input.disabled = true;
-      } else {
-        input.disabled = true;
+        payload[key] = input.value;
       }
     });
-    setElementDisabled(detailSubmit, true);
-    setElementDisabled(detailReset, true);
+    return payload;
   }
 
-  function populateDetail(record) {
-    const config = getConfig(state.model);
-    if (detailTitle) {
-      const idValue = record?.[config.primaryKey];
-      detailTitle.textContent = idValue
-        ? `${config.label} detail (${idValue})`
-        : `${config.label} detail`;
-    }
-    Object.entries(state.fieldInputs).forEach(([key, input]) => {
-      const fieldConfig = config.fields.find((field) => field.key === key);
+  populateFields(record) {
+    Object.entries(this.fieldInputs).forEach(([key, input]) => {
+      const fieldConfig = this.fieldConfigs[key];
       const value = record?.[key];
       if (input.type === "checkbox") {
         input.checked = Boolean(value);
@@ -303,239 +407,224 @@ function getEndpoint(modelKey, id) {
       } else {
         input.value = value === null || value === undefined ? "" : String(value);
       }
-      if (!fieldConfig?.readOnly) {
+      if (fieldConfig?.readOnly) {
+        input.disabled = true;
+      } else if (!this.state.loading) {
         input.disabled = false;
       }
     });
-    setElementDisabled(detailSubmit, false);
-    setElementDisabled(detailReset, false);
   }
 
-  function renderTable(records) {
-    const config = getConfig(state.model);
-    tableHead.innerHTML = "";
-    tableBody.innerHTML = "";
-
-    const columns = [...config.columns, { key: "__actions", label: "actions" }];
-    columns.forEach((column) => {
-      const th = document.createElement("th");
-      th.textContent = column.label;
-      tableHead.appendChild(th);
-    });
-
-    records.forEach((record) => {
-      const tr = document.createElement("tr");
-      config.columns.forEach((column) => {
-        const td = document.createElement("td");
-        td.textContent = formatValue(column, record);
-        tr.appendChild(td);
-      });
-      const actionCell = document.createElement("td");
-      const editButton = document.createElement("button");
-      editButton.type = "button";
-      editButton.textContent = "Edit";
-      editButton.addEventListener("click", () => {
-        state.selectedRecord = record;
-        populateDetail(record);
-      });
-      actionCell.appendChild(editButton);
-      tr.appendChild(actionCell);
-      tableBody.appendChild(tr);
-    });
-  }
-
-  function showEmptyState(show, message) {
-    if (!emptyState) {
+  updateDetailTitle() {
+    if (!this.detailTitle) {
       return;
     }
-    emptyState.hidden = !show;
-    if (typeof message === "string") {
-      emptyState.textContent = message;
+    if (this.state.selectedRecord) {
+      const idValue = this.state.selectedRecord[this.config.primaryKey];
+      if (idValue !== undefined) {
+        this.detailTitle.textContent = `${this.config.label} detail (${idValue})`;
+        return;
+      }
+    }
+    this.detailTitle.textContent = `${this.config.label} detail`;
+  }
+
+  resetDetail() {
+    this.state.selectedRecord = null;
+    this.populateFields(null);
+    this.updateDetailTitle();
+    if (this.updateButton) {
+      this.updateButton.disabled = true;
+    }
+    if (this.deleteButton) {
+      this.deleteButton.disabled = true;
     }
   }
 
-  async function loadRecords(page = 1) {
-    const config = getConfig(state.model);
-    state.loading = true;
-    updatePageInfo();
-    showEmptyState(false);
-    tableBody.innerHTML = "";
+  selectRecord(record) {
+    this.state.selectedRecord = record;
+    this.populateFields(record);
+    this.updateDetailTitle();
+    if (this.updateButton) {
+      this.updateButton.disabled = this.state.loading;
+    }
+    if (this.deleteButton) {
+      this.deleteButton.disabled = this.state.loading;
+    }
+  }
+
+  getEndpoint(id) {
+    const base = this.config.path || `/manage/api/${this.modelKey}`;
+    if (!id) {
+      return base;
+    }
+    return `${base}/${encodeURIComponent(id)}`;
+  }
+
+  async loadRecords(page = 1) {
+    const selectedId = this.state.selectedRecord
+      ? this.state.selectedRecord[this.config.primaryKey]
+      : null;
+    this.setLoading(true);
+    this.updatePageInfo();
+    this.showEmptyState(false);
+    if (this.tableBody) {
+      this.tableBody.innerHTML = "";
+    }
     try {
       const params = new URLSearchParams({
         page: String(Math.max(1, page)),
         pageSize: String(PAGE_SIZE),
       });
-      const endpoint = `${getEndpoint(state.model)}?${params.toString()}`;
-      const response = await apiCall(endpoint, { method: "GET" });
+      const response = await this.apiCall(`${this.getEndpoint()}?${params.toString()}`, {
+        method: "GET",
+      });
       const data = Array.isArray(response?.data) ? response.data : [];
       const pagination = response?.pagination || {};
-      state.records = data;
-      state.page = Number(pagination.page) || page;
-      state.totalPages = Math.max(1, Number(pagination.totalPages) || 1);
+
+      this.state.records = data;
+      this.state.page = Number(pagination.page) || page;
+      this.state.totalPages = Math.max(1, Number(pagination.totalPages) || 1);
       const totalCount = Number(pagination.totalCount);
-      state.totalCount = Number.isFinite(totalCount)
-        ? totalCount
-        : data.length;
-      renderTable(data);
+      this.state.totalCount = Number.isFinite(totalCount) ? totalCount : data.length;
+
+      this.renderRows(data);
       if (data.length === 0) {
-        showEmptyState(true, "No records.");
-        resetDetailForm();
-      }
-      updatePageInfo();
-      log(
-        "info",
-        `Loaded ${data.length} ${config.label} records (page ${state.page}/${state.totalPages}).`
-      );
-    } catch (error) {
-      state.records = [];
-      showEmptyState(true, "Failed to load records.");
-      updatePageInfo();
-      log("error", `Failed to load ${config.label}: ${error.message}`);
-    } finally {
-      state.loading = false;
-      updatePageInfo();
-    }
-  }
-
-  function switchModel(modelKey) {
-    if (!modelConfigs[modelKey]) {
-      log("warn", `Unknown model "${modelKey}", fallback to user.`);
-      state.model = "user";
-    } else {
-      state.model = modelKey;
-    }
-    state.page = 1;
-    state.totalPages = 1;
-    state.selectedRecord = null;
-    state.records = [];
-    updateNavButtons(state.model);
-    const config = getConfig(state.model);
-    if (detailTitle) {
-      detailTitle.textContent = `${config.label} detail`;
-    }
-    if (detailFieldsContainer) {
-      detailFieldsContainer.innerHTML = "";
-      state.fieldInputs = {};
-      config.fields.forEach((field) => {
-        const { wrapper, input } = buildFieldInput(field);
-        state.fieldInputs[field.key] = input;
-        if (field.readOnly) {
-          input.dataset.readonly = "true";
+        this.showEmptyState(true, "No records.");
+        this.resetDetail();
+      } else if (selectedId) {
+        const nextRecord = data.find(
+          (record) => record[this.config.primaryKey] === selectedId,
+        );
+        if (nextRecord) {
+          this.selectRecord(nextRecord);
+        } else {
+          this.resetDetail();
         }
-        detailFieldsContainer.appendChild(wrapper);
-      });
-      resetDetailForm();
+      } else {
+        this.resetDetail();
+      }
+      this.log("info", `Loaded ${data.length} ${this.config.label} records (page ${this.state.page}/${this.state.totalPages}).`);
+    } catch (error) {
+      this.state.records = [];
+      this.showEmptyState(true, "Failed to load records.");
+      this.log("error", `Failed to load ${this.config.label}: ${error.message}`);
+    } finally {
+      this.setLoading(false);
+      this.updatePageInfo();
     }
-    loadRecords(1);
   }
 
-  async function submitDetail(event) {
-    event.preventDefault();
-    if (!state.selectedRecord) {
+  async reload() {
+    await this.loadRecords(this.state.page);
+  }
+
+  async handleUpdate() {
+    if (!this.state.selectedRecord) {
+      this.log("warn", "No record selected for update.");
       return;
     }
-    const config = getConfig(state.model);
-    const idValue = state.selectedRecord[config.primaryKey];
+    const idValue = this.state.selectedRecord[this.config.primaryKey];
     if (!idValue) {
-      log("warn", "Selected record does not have a primary key value.");
+      this.log("warn", "Selected record does not have a primary key value.");
       return;
     }
-    const payload = {};
-    Object.entries(state.fieldInputs).forEach(([key, input]) => {
-      const fieldConfig = config.fields.find((field) => field.key === key);
-      if (fieldConfig?.readOnly) {
-        return;
-      }
-      if (input.type === "checkbox") {
-        payload[key] = input.checked;
-      } else if (input.type === "datetime-local") {
-        payload[key] = input.value ? new Date(input.value).toISOString() : null;
-      } else {
-        payload[key] = input.value;
-      }
-    });
+    const payload = this.collectInputValues({ includeReadOnly: false });
+
+    this.setLoading(true);
+    this.updatePageInfo();
     try {
-      await apiCall(getEndpoint(state.model, idValue), {
+      await this.apiCall(this.getEndpoint(idValue), {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-      if (detailMessage) {
-        detailMessage.hidden = false;
-        detailMessage.textContent = "Update completed.";
-      }
-      log(
-        "success",
-        `${config.label} ${idValue} updated successfully.`
+      this.log("success", `${this.config.label} ${idValue} updated successfully.`);
+      await this.loadRecords(this.state.page);
+      const updated = this.state.records.find(
+        (record) => record[this.config.primaryKey] === idValue,
       );
-      await loadRecords(state.page);
-      const updatedRecord = state.records.find(
-        (record) => record[config.primaryKey] === idValue
-      );
-      if (updatedRecord) {
-        state.selectedRecord = updatedRecord;
-        populateDetail(updatedRecord);
+      if (updated) {
+        this.selectRecord(updated);
       } else {
-        resetDetailForm();
+        this.resetDetail();
       }
     } catch (error) {
-      if (detailMessage) {
-        detailMessage.hidden = false;
-        detailMessage.textContent = "Failed to update.";
-      }
-      log("error", `Failed to update ${config.label}: ${error.message}`);
+      this.log("error", `Failed to update ${this.config.label}: ${error.message}`);
+    } finally {
+      this.setLoading(false);
+      this.updatePageInfo();
     }
   }
 
-  function clearDetailSelection() {
-    resetDetailForm();
+  async handleCreate() {
+    const payload = this.collectInputValues({ includeReadOnly: false });
+    this.setLoading(true);
+    this.updatePageInfo();
+    let createdId;
+    try {
+      const response = await this.apiCall(this.getEndpoint(), {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const created = response && typeof response === "object"
+        ? response.data || response
+        : null;
+      if (created && typeof created === "object" && this.config.primaryKey in created) {
+        createdId = created[this.config.primaryKey];
+      }
+      this.log("success", `${this.config.label} created successfully.`);
+      await this.loadRecords(1);
+      if (createdId) {
+        const createdRecord = this.state.records.find(
+          (record) => record[this.config.primaryKey] === createdId,
+        );
+        if (createdRecord) {
+          this.selectRecord(createdRecord);
+          return;
+        }
+      }
+      this.resetDetail();
+    } catch (error) {
+      this.log("error", `Failed to create ${this.config.label}: ${error.message}`);
+    } finally {
+      this.setLoading(false);
+      this.updatePageInfo();
+    }
   }
 
-  navButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      if (state.loading) {
-        return;
-      }
-      const model = button.dataset.model;
-      if (model && model !== state.model) {
-        switchModel(model);
-      }
-    });
-  });
+  async handleDelete() {
+    if (!this.state.selectedRecord) {
+      this.log("warn", "No record selected for delete.");
+      return;
+    }
+    const idValue = this.state.selectedRecord[this.config.primaryKey];
+    if (!idValue) {
+      this.log("warn", "Selected record does not have a primary key value.");
+      return;
+    }
+    this.setLoading(true);
+    this.updatePageInfo();
+    try {
+      await this.apiCall(this.getEndpoint(idValue), {
+        method: "DELETE",
+      });
+      this.log("success", `${this.config.label} ${idValue} deleted.`);
+      const nextPage = this.state.records.length > 1 ? this.state.page : Math.max(1, this.state.page - 1);
+      await this.loadRecords(nextPage);
+      this.resetDetail();
+    } catch (error) {
+      this.log("error", `Failed to delete ${this.config.label}: ${error.message}`);
+      this.setLoading(false);
+      this.updatePageInfo();
+    }
+  }
+}
 
-  if (prevButton) {
-    prevButton.addEventListener("click", () => {
-      if (!state.loading && state.page > 1) {
-        loadRecords(state.page - 1);
-      }
-    });
+export function initDataViewers(options = {}) {
+  if (typeof options.apiCall !== "function") {
+    throw new Error("initDataViewers requires an apiCall function.");
   }
-  if (nextButton) {
-    nextButton.addEventListener("click", () => {
-      if (!state.loading && state.page < state.totalPages) {
-        loadRecords(state.page + 1);
-      }
-    });
-  }
-  if (refreshButton) {
-    refreshButton.addEventListener("click", () => {
-      if (!state.loading) {
-        loadRecords(state.page);
-      }
-    });
-  }
-  if (detailForm) {
-    detailForm.addEventListener("submit", submitDetail);
-  }
-  if (detailReset) {
-    detailReset.addEventListener("click", clearDetailSelection);
-  }
-
-  switchModel(state.model);
-
-  return {
-    getState: () => ({ ...state }),
-    reload: () => loadRecords(state.page),
-    switchModel: (model) => switchModel(model),
-    clearSelection: () => clearDetailSelection(),
-  };
+  const containers = Array.from(document.querySelectorAll(".data-viewer"));
+  const viewers = containers.map((container) => new DataViewer(container, options));
+  return viewers;
 }
