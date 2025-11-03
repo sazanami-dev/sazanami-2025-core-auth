@@ -57,6 +57,7 @@
 
 
   <script>
+    const PAGE_PROVIDED_URL = window.location.origin + '/manage';
     document.addEventListener('DOMContentLoaded', () => {
       const baseUrlInput = document.getElementById('base-url');
       const apiKeyInput = document.getElementById('api-key');
@@ -81,8 +82,8 @@
           localStorage.setItem('adminApiBaseUrl', baseUrl);
           localStorage.setItem('adminApiKey', apiKey);
           alert('Settings saved successfully.');
-          
-          location.href = '/';
+
+          location.href = PAGE_PROVIDED_URL;
         } else {
           alert('Please fill in both fields.');
         }
