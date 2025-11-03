@@ -12,6 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const logOutput = document.getElementById('log-output');
 
+  // Helpers
+  async function apiCall(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      ...options.headers,
+    };
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    return response.json();
+  }
+
   function log(level, message) {
     let prefix = "";
     switch (level) {
@@ -45,58 +63,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_KEY = localStorage.getItem('adminApiKey') || '';
   const API_BASE_URL = localStorage.getItem('adminApiBaseUrl') || '';
 
+  log("success", "API key loaded");
+  log("success", "API Base URL loaded");
 
   if (!API_KEY || !API_BASE_URL) {
     log("warn", "API key or Base URL is not set in localStorage.");
   }
 
-  // api call helper
-  async function apiCall(endpoint, options = {}) {
-    try {
-      const response = await fetch(endpoint, options);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      log("error", `API call failed: ${error.message}`);
-      throw error;
-    }
-  }
-
-  /**
-   * [DUMMY] 認証ステータスを確認する
-   * (将来的に、ここで /api/admin/ping 等を fetch してください)
-   */
   async function checkAuthStatus() {
-    log("認証ステータスを確認中...");
-    authStatus.textContent = "確認中...";
-    authCheckButton.disabled = true;
+    const response = await apiCall('/manage/api/checkKey', {
+      method: 'GET',
+    });
 
-    // --- ここからダミー処理 (0.5秒待つ) ---
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 50%の確率で成功/失敗をシミュレート
-    const isAuthSuccess = Math.random() > 0.5;
-    // --- ダミー処理ここまで ---
-
-    if (isAuthSuccess) {
-      // (実際の処理: fetchが 200 OK で返ってきた場合)
-      authStatus.textContent = "✔ OK";
-      log("認証ステータス: OK");
+    if (response && response.valid) {
+      authStatus.textContent = "Verified";
+      authStatus.style.color = "green";
+      log("success", "API key is valid.");
     } else {
-      // (実際の処理: fetchが 401 や 403 で返ってきた場合)
-      authStatus.textContent = "✘ NG (認証エラー)";
-      log("[エラー] 認証に失敗しました。");
+      authStatus.textContent = "Invalid";
+      authStatus.style.color = "red";
+      log("error", "API key is invalid.");
     }
-    authCheckButton.disabled = false;
   }
 
   // 再確認ボタンのロジック
   authCheckButton.addEventListener('click', checkAuthStatus);
-
-  // ページ読み込み時にも認証確認を実行
-  checkAuthStatus();
 
   // --- 3. タブ切り替え機能 ---
   const tabButtons = document.querySelectorAll('.tab-button');
@@ -119,9 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- 4. ダミー操作ログ ---
-  // (APIキーのチェックロジックを削除。認証は checkAuthStatus が担う)
-  document.getElementById('dummy-action-1').addEventListener('click', () => log("ダミー操作 (ユーザー) 実行"));
-  document.getElementById('dummy-action-2').addEventListener('click', () => log("ダミー操作 (セッション) 実行"));
-  document.getElementById('dummy-action-3').addEventListener('click', () => log("ダミー操作 (リダイレクト) 実行"));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuthStatus();
+  });
 });
