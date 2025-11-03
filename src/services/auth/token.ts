@@ -1,4 +1,4 @@
-import { TokenClaims } from "@/schemas/tokenClaimsSchema";
+import { TokenClaims } from "@/schemas/object/tokenClaims";
 import jwt from "jsonwebtoken";
 import Logger from "@/logger";
 import { getKey } from "@/key";

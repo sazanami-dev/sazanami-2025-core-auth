@@ -4,6 +4,7 @@ import { createAnonymousSession, verifySessionIdAndResolveUser } from "@/service
 import { createPendingRedirect } from "@/services/auth/pending-redirect";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
+import { makeErrorPageUrlHelper } from "@/utils/make-error-page-url-helper";
 
 const router = Router();
 
@@ -16,7 +17,8 @@ router.get('/', async (req, res) => {
   let sessionId: string | undefined;
 
   if (!redirectUrl) {
-    return DoResponse.init(res).badRequest().errorMessage('redirectUrl query parameter is required').send();
+    const errorPageUrl = makeErrorPageUrlHelper('REQUIRED_PARAMETER_MISSING', '必須パラメーターが欠落しています。', 'redirectUrl query parameter is required!');
+    return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
 
   if (!cookies || !cookies.sessionId) {
@@ -46,14 +48,14 @@ router.get('/', async (req, res) => {
     return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.REAUTHENTICATION_PAGE)).send();
   }
 
-  const token = await issueToken(makeClaimsHelper(sessionId));
+  const token = await issueToken(await makeClaimsHelper(sessionId));
 
   // Validate redirectUrl and postbackUrl
   try {
     new URL(redirectUrl);
     if (postbackUrl) new URL(postbackUrl);
   } catch (e) {
-    return DoResponse.init(res).badRequest().errorMessage('Invalid redirectUrl').send();
+    // return DoResponse.init(res).badRequest().errorMessage('Invalid redirectUrl').send();
   }
 
   // Postback

@@ -37,6 +37,8 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
   ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' }, 
   REAUTHENTICATION_PAGE: { type: 'string', default: 'http://localhost:5173/reauth' },
+  PORTAL_PAGE: { type: 'string', default: 'http://localhost:5173/' },
+  ERROR_PAGE: { type: 'string', default: 'http://localhost:5173/error' },
   TOKEN_SIGN_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
   TOKEN_DEFAULT_EXPIRATION: { type: 'number', default: 60 * 60 * 24 * 1 }, // 1 day
   TOKEN_DEFAULT_ISSUER: { type: 'string', default: 'sazanami-core-auth' },

@@ -1,19 +1,24 @@
 import { Router } from "express";
 import { verifyToken } from "@/services/auth/token";
+import { DoResponse } from "@/utils/do-resnpose";
+import { VerifyResponseSchema, VerifyRequestSchema } from "@/schemas/request/verifySchema";
 
 const router = Router();
 
 router.post("/", async (req, res) => {
-  const { token } = req.body;
-  if (!token) {
-    return res.status(400).json({ error: "Token is required" });
+  let token: string;
+  try {
+    const parsedBody = VerifyRequestSchema.parse(req.body);
+    token = parsedBody.token;
+  } catch (e) {
+    return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
   }
 
   const verified = await verifyToken(token);
   if (verified) {
-    return res.status(200).json({ valid: true, payload: verified });
+    return DoResponse.init(res).ok().validatedJson({ valid: true, payload: verified }, VerifyResponseSchema).send();
   } else {
-    return res.status(200).json({ valid: false });
+    return DoResponse.init(res).ok().validatedJson({ valid: false }, VerifyResponseSchema).send();
   }
 });
 
