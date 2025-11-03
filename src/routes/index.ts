@@ -6,6 +6,7 @@ import initializeRoute from "./initialize";
 import wellKnownRoute from "./well-known";
 import verifyRoute from "./verify";
 import debugRoute from "./debug";
+import manageRoute from "./manage/api/index";
 import Logger from "@/logger";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.use('/authenticate', authenticateRoute);
 router.use('/initialize', initializeRoute);
 router.use('/.well-known', wellKnownRoute);
 router.use('/verify', verifyRoute);
+router.use('/manage', manageRoute);
 
 if (EnvUtil.get(EnvKey.NODE_ENV) !== 'production') {
   router.use('/debug', debugRoute);
