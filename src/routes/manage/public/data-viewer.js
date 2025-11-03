@@ -16,6 +16,7 @@ const modelConfigs = {
       { key: "displayName", label: "displayName", type: "text" },
       { key: "isInitialized", label: "isInitialized", type: "checkbox" },
     ],
+    allowPrimaryKeyInput: true,
   },
   registrationCode: {
     label: "Registration Code",
@@ -32,6 +33,7 @@ const modelConfigs = {
       { key: "userId", label: "userId", type: "text" },
       { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
+    allowPrimaryKeyInput: true,
   },
   session: {
     label: "Session",
@@ -48,6 +50,7 @@ const modelConfigs = {
       { key: "userId", label: "userId", type: "text" },
       { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
+    allowPrimaryKeyInput: true,
   },
   pendingRedirect: {
     label: "Pending Redirect",
@@ -71,6 +74,7 @@ const modelConfigs = {
       { key: "sessionId", label: "sessionId", type: "text" },
       { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
+    allowPrimaryKeyInput: true,
   },
 };
 
@@ -243,6 +247,11 @@ class DataViewer {
       this.fieldInputs[field.key] = input;
       this.fieldConfigs[field.key] = field;
       this.detailFieldsContainer.appendChild(wrapper);
+      if (field.readOnly && this.config.allowPrimaryKeyInput && field.key === this.config.primaryKey) {
+        input.readOnly = false;
+        input.disabled = false;
+        input.dataset.primaryKeyField = "true";
+      }
     });
   }
 
@@ -284,11 +293,16 @@ class DataViewer {
     if (this.detailFieldsContainer) {
       Object.entries(this.fieldInputs).forEach(([key, input]) => {
         const fieldConfig = this.fieldConfigs[key];
-        if (fieldConfig?.readOnly) {
+        const isPrimaryKeyField = this.config.allowPrimaryKeyInput && input.dataset.primaryKeyField === "true";
+        if (fieldConfig?.readOnly && !isPrimaryKeyField) {
           input.disabled = true;
-        } else {
-          input.disabled = loading ? true : false;
+          return;
         }
+        if (isPrimaryKeyField) {
+          input.disabled = loading || Boolean(this.state.selectedRecord);
+          return;
+        }
+        input.disabled = loading;
       });
     }
   }
@@ -366,11 +380,12 @@ class DataViewer {
     });
   }
 
-  collectInputValues({ includeReadOnly = false } = {}) {
+  collectInputValues({ includeReadOnly = false, includePrimaryKey = false } = {}) {
     const payload = {};
     Object.entries(this.fieldInputs).forEach(([key, input]) => {
       const fieldConfig = this.fieldConfigs[key];
-      if (!includeReadOnly && fieldConfig?.readOnly) {
+      const isPrimaryKeyField = this.config.allowPrimaryKeyInput && key === this.config.primaryKey && input.dataset.primaryKeyField === "true";
+      if (!includeReadOnly && fieldConfig?.readOnly && !(includePrimaryKey && isPrimaryKeyField)) {
         return;
       }
       if (input.type === "checkbox") {
@@ -379,6 +394,9 @@ class DataViewer {
         payload[key] = input.value ? new Date(input.value).toISOString() : null;
       } else {
         payload[key] = input.value;
+      }
+      if (isPrimaryKeyField && payload[key] === "") {
+        delete payload[key];
       }
     });
     return payload;
@@ -407,10 +425,13 @@ class DataViewer {
       } else {
         input.value = value === null || value === undefined ? "" : String(value);
       }
-      if (fieldConfig?.readOnly) {
+      const isPrimaryKeyField = this.config.allowPrimaryKeyInput && input.dataset.primaryKeyField === "true";
+      if (fieldConfig?.readOnly && !isPrimaryKeyField) {
         input.disabled = true;
-      } else if (!this.state.loading) {
-        input.disabled = false;
+      } else if (isPrimaryKeyField) {
+        input.disabled = this.state.loading || Boolean(record);
+      } else {
+        input.disabled = this.state.loading;
       }
     });
   }
@@ -557,7 +578,7 @@ class DataViewer {
   }
 
   async handleCreate() {
-    const payload = this.collectInputValues({ includeReadOnly: false });
+    const payload = this.collectInputValues({ includeReadOnly: false, includePrimaryKey: true });
     this.setLoading(true);
     this.updatePageInfo();
     let createdId;
@@ -614,6 +635,7 @@ class DataViewer {
       this.resetDetail();
     } catch (error) {
       this.log("error", `Failed to delete ${this.config.label}: ${error.message}`);
+    } finally {
       this.setLoading(false);
       this.updatePageInfo();
     }
