@@ -16,7 +16,6 @@ router.get('/', async (req, res) => {
 
   const reqCode = req.query.regCode as string | undefined;
   const cookies = req.cookies;
-  let sessionId: string | undefined;
 
   // regCodeからユーザーを特定
   if (!reqCode) {
@@ -34,9 +33,11 @@ router.get('/', async (req, res) => {
     if (await isAnonymousSession(cookies.sessionId)) {
       pendingRedirect = await getPendingRedirect(cookies.sessionId);
     } else {
-      return DoResponse.init(res).ok().send();
+      return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.PORTAL_PAGE)).send();
     }
   }
+
+  let sessionId: string | undefined;
 
   await createAuthenticatedSession(user.id).then(session => {
     sessionId = session.id;
