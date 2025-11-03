@@ -26,7 +26,16 @@ async function apiCall(endpoint, options = {}) {
   if (!response.ok) {
     throw new Error(`API request failed with status ${response.status}`);
   }
-  return response.json();
+  if (response.status === 204) {
+    return null;
+  }
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  }
+  const text = await response.text();
+  return text.length > 0 ? text : null;
 }
 
 function log(level, message) {
