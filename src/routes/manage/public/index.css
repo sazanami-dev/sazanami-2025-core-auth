@@ -217,3 +217,119 @@ body {
 .event-category-badge.other {
   background-color: #9c27b0;
 }
+
+.data-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.data-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.data-tab-button {
+  padding: 4px 8px;
+  border: 1px solid #aaa;
+  background-color: #eee;
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+.data-tab-button.active {
+  background-color: #fff;
+  font-weight: bold;
+}
+
+.data-nav-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.data-content {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.data-table-wrapper {
+  flex: 2;
+  min-width: 300px;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table td:last-child {
+  white-space: nowrap;
+}
+
+.data-empty-state {
+  margin-top: 8px;
+}
+
+.data-detail {
+  flex: 1;
+  min-width: 220px;
+}
+
+.data-detail h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.data-detail-field {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-detail-field label {
+  font-size: 0.9em;
+}
+
+.data-detail-field input,
+.data-detail-field textarea {
+  padding: 4px 6px;
+  font-size: 0.95em;
+  border: 1px solid #ccc;
+  font-family: inherit;
+}
+
+.data-detail-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.data-detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.data-detail-message {
+  margin-top: 8px;
+  font-size: 0.9em;
+}

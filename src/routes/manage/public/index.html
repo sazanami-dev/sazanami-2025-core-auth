@@ -25,6 +25,7 @@
         <button class="tab-button" data-tab="user-tab">User</button>
         <button class="tab-button" data-tab="session-tab">Session</button>
         <button class="tab-button" data-tab="regcode-tab">regCode</button>
+        <button class="tab-button" data-tab="table-view-tab">Table View</button>
         <button class="tab-button" data-tab="event-tab">Events</button>
       </nav>
       <section id="home-tab" class="tab-content active">
@@ -37,6 +38,51 @@
       <section id="session-tab" class="tab-content">
       </section>
       <section id="regcode-tab" class="tab-content">
+      </section>
+      <section id="table-view-tab" class="tab-content">
+        <div class="data-manager">
+          <div class="data-nav-bar">
+            <nav class="data-nav" role="tablist">
+              <button class="data-tab-button active" data-model="user">User</button>
+              <button class="data-tab-button" data-model="registrationCode">Registration Code</button>
+              <button class="data-tab-button" data-model="session">Session</button>
+              <button class="data-tab-button" data-model="pendingRedirect">Pending Redirect</button>
+            </nav>
+            <div class="data-nav-actions">
+              <button id="data-refresh-button" type="button">Refresh</button>
+            </div>
+          </div>
+          <div class="data-content">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr id="data-table-head"></tr>
+                </thead>
+                <tbody id="data-table-body">
+                </tbody>
+              </table>
+              <div id="data-empty-state" class="data-empty-state" hidden>
+                No records.
+              </div>
+            </div>
+            <div class="data-detail">
+              <h3 id="data-detail-title">Record detail</h3>
+              <form id="data-detail-form">
+                <div id="data-detail-fields"></div>
+                <div class="data-detail-actions">
+                  <button id="data-detail-submit" type="submit">Update</button>
+                  <button id="data-detail-reset" type="button">Clear</button>
+                </div>
+              </form>
+              <div id="data-detail-message" class="data-detail-message" hidden></div>
+            </div>
+          </div>
+          <div class="data-pagination">
+            <button id="data-prev-button" type="button">Prev</button>
+            <span id="data-page-info">Page 1 / 1</span>
+            <button id="data-next-button" type="button">Next</button>
+          </div>
+        </div>
       </section>
       <section id="event-tab" class="tab-content">
         <div class="event-log-header">
