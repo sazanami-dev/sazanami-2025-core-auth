@@ -3,13 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>管理画面</title>
+  <title>Admin panel</title>
   <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
 
-  <header class="auth-header">
+  <header class="header">
+    <label class="title">Admin Panel</label>
     <label>Auth Status:</label>
     <span id="auth-status">Unknown</span>
     <button id="auth-check-button">Recheck</button>
@@ -24,6 +25,7 @@
         <button class="tab-button" data-tab="user-tab">User</button>
         <button class="tab-button" data-tab="session-tab">Session</button>
         <button class="tab-button" data-tab="regcode-tab">regCode</button>
+        <button class="tab-button" data-tab="event-tab">Events</button>
       </nav>
       <section id="home-tab" class="tab-content active">
         <h2>HOME</h2>
@@ -35,6 +37,37 @@
       <section id="session-tab" class="tab-content">
       </section>
       <section id="regcode-tab" class="tab-content">
+      </section>
+      <section id="event-tab" class="tab-content">
+        <div class="event-log-header">
+          <h2>Event Logs</h2>
+          <div class="event-log-actions">
+            <button id="event-refresh-button" type="button">Refresh</button>
+          </div>
+        </div>
+        <div class="event-pagination">
+          <button id="event-prev-button" type="button">Prev</button>
+          <span id="event-page-info">Page 1 / 1</span>
+          <button id="event-next-button" type="button">Next</button>
+        </div>
+        <div class="event-table-wrapper">
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Reporter</th>
+                <th class="event-payload-header">Payload</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="event-log-body">
+            </tbody>
+          </table>
+        </div>
+        <div id="event-log-empty" class="event-empty-state" hidden>
+          Event logs are not available.
+        </div>
+      </section>
     </main>
 
     <aside class="log-viewer">
