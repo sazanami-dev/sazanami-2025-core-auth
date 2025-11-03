@@ -31,4 +31,81 @@ router.get("/", (req, res) => {
     });
 });
 
+router.get("/:id", (req, res) => {
+  const code = req.params.id
+  prisma.registrationCode.findUnique({
+    where: { code: code },
+  })
+    .then((code) => {
+      if (code) {
+        res.json(code);
+      } else {
+        res.status(404).json({ error: "Registration code not found." });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to fetch registration code." });
+    });
+});
+
+router.delete("/:id", (req, res) => {
+  const code = req.params.id;
+  prisma.registrationCode.delete({
+    where: { code: code },
+  })
+    .then(() => {
+      res.status(204).end();
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to delete registration code." });
+    });
+});
+
+router.post("/", (req, res) => {
+  const { code, userId } = req.body;
+  prisma.registrationCode.create({
+    data: {
+      code: code || undefined,
+      userId: userId,
+    },
+  })
+    .then((newCode) => {
+      res.status(201).json(newCode);
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to create registration code." });
+    });
+});
+
+router.put("/:id", (req, res) => {
+  const code = req.params.id;
+  const { userId } = req.body;
+  prisma.registrationCode.update({
+    where: { code: code },
+    data: { userId: userId },
+  })
+    .then((updatedCode) => {
+      res.json(updatedCode);
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to update registration code." });
+    });
+});
+
+router.post("/", (req, res) => {
+  const { code, userId } = req.body;
+  prisma.registrationCode.create({
+    data: {
+      code: code || undefined,
+      userId: userId,
+    },
+  })
+    .then((newCode) => {
+      res.status(201).json(newCode);
+    })
+    .catch((error) => {
+      res.status(500).json({ error: "Failed to create registration code." });
+    });
+});
+
 export default router;
