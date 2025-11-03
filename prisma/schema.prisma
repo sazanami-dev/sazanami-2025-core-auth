@@ -51,6 +51,7 @@ model EventLog {
   id        String   @id @default(cuid())
   eventType String
   category  String?
+  reporter  String?
   payload   String
   createdAt DateTime @default(now())
 }
