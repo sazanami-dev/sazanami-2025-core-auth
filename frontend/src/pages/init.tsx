@@ -1,7 +1,7 @@
 import FloatingBubbles from "@/components/floating-bubble"
 import { Input } from "@heroui/input"
 import { Button } from "@heroui/button"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { VerifyResponseSchema } from "@/types/api/verify"
 import { TokenClaims } from "@/types/tokenClaims"
 
@@ -17,29 +17,32 @@ export default function InitializePage() {
   // 1 Verity token with api call (POST)
   // Workaround
   const API_BASE_URL = "http://localhost:3000"
-  fetch(`${API_BASE_URL}/verify`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Verify response data:", data)
-      const parsed = VerifyResponseSchema.safeParse(data)
-      if (parsed.success) {
-        setVaidToken(parsed.data.valid)
-        if (parsed.data.valid && parsed.data.payload) {
-          setClaims(parsed.data.payload)
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Verify response data:", data)
+        const parsed = VerifyResponseSchema.safeParse(data)
+        if (parsed.success) {
+          setVaidToken(parsed.data.valid)
+          if (parsed.data.valid && parsed.data.payload) {
+            setClaims(parsed.data.payload)
+          }
+        } else {
+          console.error("Invalid response schema:", parsed.error)
         }
-      } else {
-        console.error("Invalid response schema:", parsed.error)
-      }
-    })
-    .catch((error) => {
-      console.error("Error verifying token:", error)
-    })
+      })
+      .catch((error) => {
+        console.error("Error verifying token:", error)
+      })
+  }, [token])
 
 
   return <>
