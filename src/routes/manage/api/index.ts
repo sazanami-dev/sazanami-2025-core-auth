@@ -5,5 +5,6 @@ import eventRouter from "./event";
 const router = Router();
 
 router.use("/checkKey", checkKeyRouter);
+router.use("/event", eventRouter);
 
 export default router;
