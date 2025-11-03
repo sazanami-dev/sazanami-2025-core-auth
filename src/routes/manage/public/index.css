@@ -322,6 +322,7 @@ body {
 }
 
 .data-detail-actions {
+  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
