@@ -1,5 +1,6 @@
 import { Router } from "express";
-import checkKeyRouter from "./checkKey.js";
+import checkKeyRouter from "./checkKey";
+import eventRouter from "./event";
 
 const router = Router();
 
