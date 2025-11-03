@@ -9,4 +9,6 @@ export function makeErrorPageUrlHelper(code: string, message?: string, detail?: 
   if (detail) {
     url.searchParams.append('detail', detail);
   }
+
+  return url;
 }
