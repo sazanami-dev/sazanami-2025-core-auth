@@ -16,22 +16,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let prefix = "";
     switch (level) {
       case "success":
-        prefix = "[SUCC]";
+        prefix = "✅"
         break;
       case "info":
-        prefix = "[INFO]";
+        prefix = "ℹ️"
         break;
       case "error":
-        prefix = "[ERR ] ";
+        prefix = "❗"
         break;
       case "warn":
-        prefix = "[WARN]";
+        prefix = "⚠️"
         break;
       case "debug":
-        prefix = "[DEBG]";
+        prefix = "📝"
         break;
       default:
-        prefix = "";
+        prefix = "❓";
     }
     const timestamp = new Date().toLocaleTimeString('ja-JP');
     logOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
