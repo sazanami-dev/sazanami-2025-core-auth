@@ -23,9 +23,10 @@ model User {
 }
 
 model RegistrationCode {
-  code   String @id @default(nanoid(8))
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  code      String   @id @default(nanoid(8))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Session {
@@ -33,6 +34,7 @@ model Session {
   userId          String?
   user            User?             @relation(fields: [userId], references: [id])
   PendingRedirect PendingRedirect[]
+  createdAt       DateTime          @default(now())
 }
 
 model PendingRedirect {
