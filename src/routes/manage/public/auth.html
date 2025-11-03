@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>管理画面 - 認証設定</title>
+    
+    <style>
+        /* 1. 中央のコンテナ (幅を定義) */
+        .config-container {
+            margin: 0 auto; /* 中央揃え */
+            padding-top: 5vh; /* 上部の余白 */
+            max-width: 400px; /* コンテナの最大幅 */
+            width: 90%;
+            font-family: sans-serif;
+        }
+
+        /* 2. "Admin panel" (中央) */
+        .config-container h2 {
+            text-align: center;
+        }
+
+        /* 3. "[ baseURL ]" / "[ API key ]" (中央のコンテナの幅いっぱいに) */
+        .config-container input[type="text"],
+        .config-container input[type="password"] {
+            width: 100%;
+            box-sizing: border-box; /* (padding/borderを含めて100%にするため) */
+            padding: 4px; /* (ブラウザ標準の余白) */
+        }
+        
+        /* 4. "[ Submit ]" (入力欄の幅の中で左揃え) */
+        .config-container button {
+            /* デフォルトで左揃え */
+            padding: 4px 8px; /* (ブラウザ標準の余白) */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="config-container">
+        <h2>Admin panel</h2>
+        
+        <form id="config-form">
+            <p>
+                <label for="base-url">Base URL:</label><br>
+                <input type="text" id="base-url" placeholder="https://api.example.com">
+            </p>
+
+            <p>
+                <label for="api-key">API Key:</label><br>
+                <input type="password" id="api-key" placeholder="sk_...">
+            </p>
+
+            <p>
+                <button type="submit" id="save-button">Submit</button>
+            </p>
+        </form>
+
+        <p id="save-status"></p>
+        <hr>
+        <p>
+            <a href="admin.html">管理画面トップへ戻る</a>
+        </p>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const baseUrlInput = document.getElementById('base-url');
+            const apiKeyInput = document.getElementById('api-key');
+            const saveButton = document.getElementById('save-button');
+            const saveStatus = document.getElementById('save-status');
+            const configForm = document.getElementById('config-form');
+
+            // --- 1. 起動時にlocalStorageから読み込む ---
+            // (admin.js 側とキーの名前を合わせる必要があります)
+            const storedBaseUrl = localStorage.getItem('adminApiBaseUrl');
+            const storedApiKey = localStorage.getItem('adminApiKey');
+
+            if (storedBaseUrl) {
+                baseUrlInput.value = storedBaseUrl;
+            }
+            if (storedApiKey) {
+                apiKeyInput.value = storedApiKey;
+            }
+
+            // --- 2. 保存ボタンの処理 ---
+            configForm.addEventListener('submit', (e) => {
+                e.preventDefault(); // フォームの送信をキャンセル
+                
+                const baseUrl = baseUrlInput.value.trim();
+                const apiKey = apiKeyInput.value.trim();
+
+                try {
+                    // (admin.js 側とキーの名前を合わせる)
+                    localStorage.setItem('adminApiBaseUrl', baseUrl);
+                    localStorage.setItem('adminApiKey', apiKey);
+                    
+                    saveStatus.textContent = "保存しました。";
+                    // (装飾はしない)
+
+                } catch (err) {
+                    saveStatus.textContent = `保存に失敗しました: ${err.message}`;
+                }
+                
+                // 1.5秒後にメッセージを消す
+                setTimeout(() => {
+                    saveStatus.textContent = "";
+                }, 1500);
+            });
+        });
+    </script>
+
+</body>
+</html>
