@@ -6,6 +6,7 @@ import { setupMiddlewares } from './boot/middlewares';
 import { testSignKey } from './boot/test-sign-key';
 import indexRouter from './routes';
 import { setupCronJobs } from './boot/cron';
+import { devFrontendProxy } from './boot/dev-frontend-proxy';
 
 export const createApp = async () => {
   const app = express();
@@ -14,6 +15,8 @@ export const createApp = async () => {
   setupSwagger(app, logger);
 
   setupMiddlewares(app);
+
+  devFrontendProxy(app);
 
   setupCronJobs();
 
