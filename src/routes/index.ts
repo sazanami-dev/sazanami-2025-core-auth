@@ -6,7 +6,7 @@ import initializeRoute from "./initialize";
 import wellKnownRoute from "./well-known";
 import verifyRoute from "./verify";
 import debugRoute from "./debug";
-import manageRoute from "./manage/api/index";
+import manageRoute from "./manage";
 import Logger from "@/logger";
 
 const router = Router();
