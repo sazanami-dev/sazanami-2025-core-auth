@@ -22,7 +22,6 @@ export default function verifyManageKeyMiddleware(req: Request, res: Response, n
       "MIDDLEWARE"
     );
     return DoResponse.init(res).status(401).json({ error: 'Unauthorized: Invalid manage key, This incident will be logged.' }).send();
-  } else {
-    next();
   }
+  next();
 };
