@@ -11,59 +11,56 @@ import Logger from "@/logger";
 const router = Router();
 const logger = new Logger('route', 'initialize');
 
+const SESSION_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 2; // 2 days
+
 router.get('/', async (req, res) => {
-  // regCodeを受け取ってユーザー初期化処理を開始する
-
   const reqCode = req.query.regCode as string | undefined;
-  const cookies = req.cookies;
-
-  // regCodeからユーザーを特定
   if (!reqCode) {
     return DoResponse.init(res).badRequest().errorMessage('regCode query parameter is required').send();
   }
+
   const user = await verifyRegCodeAndResolveUser(reqCode).catch(() => null);
   if (!user) {
     return DoResponse.init(res).badRequest().errorMessage('Invalid regCode').send();
   }
 
-  // セッション処理
+  const { sessionId: oldSessionId } = req.cookies;
   let pendingRedirect: PendingRedirect | null = null;
 
-  if (cookies && cookies.sessionId) {
-    if (await isAnonymousSession(cookies.sessionId)) {
-      pendingRedirect = await getPendingRedirect(cookies.sessionId);
-    } else {
+  if (oldSessionId) {
+    const isAnonymous = await isAnonymousSession(oldSessionId);
+
+    if (isAnonymous) {
+      pendingRedirect = await getPendingRedirect(oldSessionId);
+    } else if (user.isInitialized) {
+      logger.info(`User ${user.id} attempted to re-initialize but is already initialized. Redirecting to portal.`);
       return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.PORTAL_PAGE)).send();
     }
   }
 
-  let sessionId: string | undefined;
-
-  await createAuthenticatedSession(user.id).then(session => {
-    sessionId = session.id;
-  });
+  const newSession = await createAuthenticatedSession(user.id);
+  const newSessionId = newSession.id;
 
   if (pendingRedirect) {
-    createPendingRedirect(sessionId!,
-      pendingRedirect.redirectUrl === null ? undefined : pendingRedirect.redirectUrl,
-      pendingRedirect.postbackUrl === null ? undefined : pendingRedirect.postbackUrl,
-      pendingRedirect.state === null ? undefined : pendingRedirect.state);
+    await createPendingRedirect(
+      newSessionId,
+      pendingRedirect.redirectUrl ?? undefined,
+      pendingRedirect.postbackUrl ?? undefined,
+      pendingRedirect.state ?? undefined
+    );
   }
 
-  res.cookie('sessionId', sessionId, {
+  res.cookie('sessionId', newSessionId, {
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 24 * 2, // 2 days
+    maxAge: SESSION_COOKIE_MAX_AGE,
   });
 
-  // 初期設定用トークンを発行し、リダイレクトする
-  const token = await issueToken(await makeClaimsHelper(sessionId!));
-
+  const token = await issueToken(await makeClaimsHelper(newSessionId));
   const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
   url.searchParams.append('token', token);
 
   logger.info(`Redirecting to account initialization page for user ${user.id}`);
-
   return DoResponse.init(res).redirect(url.toString()).send();
 });
 
