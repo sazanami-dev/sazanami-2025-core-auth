@@ -21,10 +21,12 @@ const modelConfigs = {
     columns: [
       { key: "code", label: "code" },
       { key: "userId", label: "userId" },
+      { key: "createdAt", label: "createdAt", format: dateFormatter },
     ],
     fields: [
       { key: "code", label: "code", type: "text", readOnly: true },
       { key: "userId", label: "userId", type: "text" },
+      { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
   },
   session: {
@@ -33,10 +35,12 @@ const modelConfigs = {
     columns: [
       { key: "id", label: "id" },
       { key: "userId", label: "userId" },
+      { key: "createdAt", label: "createdAt", format: dateFormatter },
     ],
     fields: [
       { key: "id", label: "id", type: "text", readOnly: true },
       { key: "userId", label: "userId", type: "text" },
+      { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
   },
   pendingRedirect: {
@@ -47,6 +51,7 @@ const modelConfigs = {
       { key: "redirectUrl", label: "redirectUrl" },
       { key: "used", label: "used", format: booleanFormatter },
       { key: "expiresAt", label: "expiresAt", format: dateFormatter },
+      { key: "createdAt", label: "createdAt", format: dateFormatter },
     ],
     fields: [
       { key: "id", label: "id", type: "text", readOnly: true },
@@ -56,6 +61,7 @@ const modelConfigs = {
       { key: "used", label: "used", type: "checkbox" },
       { key: "expiresAt", label: "expiresAt", type: "datetime" },
       { key: "sessionId", label: "sessionId", type: "text" },
+      { key: "createdAt", label: "createdAt", type: "text", readOnly: true },
     ],
   },
 };
