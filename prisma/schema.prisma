@@ -46,3 +46,10 @@ model PendingRedirect {
   sessionId   String
   session     Session? @relation(fields: [sessionId], references: [id])
 }
+
+model EventLog {
+  id        String   @id @default(cuid())
+  eventType String
+  payload   String
+  createdAt DateTime @default(now())
+}
