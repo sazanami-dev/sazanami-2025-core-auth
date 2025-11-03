@@ -5,3 +5,5 @@ const router = Router();
 router.get("/", verifyManageKeyMiddleware, (_req, res) => {
   res.json({ valid: true });
 });
+
+export default router;
