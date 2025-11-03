@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-  // --- 0. レイアウト調整 (配置のため) ---
   const header = document.querySelector('.auth-header');
   const logViewer = document.querySelector('.log-viewer');
 
@@ -12,19 +10,59 @@ document.addEventListener('DOMContentLoaded', () => {
   adjustLayout();
   window.addEventListener('resize', adjustLayout);
 
-  // --- 1. ログ出力機能 ---
   const logOutput = document.getElementById('log-output');
 
-  function log(message) {
+  function log(level, message) {
+    let prefix = "";
+    switch (level) {
+      case "success":
+        prefix = "[SUCC]";
+        break;
+      case "info":
+        prefix = "[INFO]";
+        break;
+      case "error":
+        prefix = "[ERR ] ";
+        break;
+      case "warn":
+        prefix = "[WARN]";
+        break;
+      case "debug":
+        prefix = "[DEBG]";
+        break;
+      default:
+        prefix = "";
+    }
     const timestamp = new Date().toLocaleTimeString('ja-JP');
-    logOutput.textContent += `[${timestamp}] ${message}\n`;
+    logOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
     logOutput.scrollTop = logOutput.scrollHeight;
   }
-  log("管理画面スクリプト初期化完了。");
+  log("info", "Admin panel initialized.");
 
-  // --- 2. 認証機能 ---
   const authStatus = document.getElementById('auth-status');
   const authCheckButton = document.getElementById('auth-check-button');
+
+  const API_KEY = localStorage.getItem('adminApiKey') || '';
+  const API_BASE_URL = localStorage.getItem('adminApiBaseUrl') || '';
+
+
+  if (!API_KEY || !API_BASE_URL) {
+    log("warn", "API key or Base URL is not set in localStorage.");
+  }
+
+  // api call helper
+  async function apiCall(endpoint, options = {}) {
+    try {
+      const response = await fetch(endpoint, options);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      log("error", `API call failed: ${error.message}`);
+      throw error;
+    }
+  }
 
   /**
    * [DUMMY] 認証ステータスを確認する
