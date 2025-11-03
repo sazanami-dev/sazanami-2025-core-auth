@@ -79,16 +79,6 @@ export default function InitializePage() {
         <br />
         isVaidToken: {isVaidToken ? "true" : "false"}
         <br />
-        {/* Claims:<br /> */}
-        {/* - sub: {claims?.sub || "<none>"}<br /> */}
-        {/* - iss: {claims?.iss || "<none>"}<br /> */}
-        {/* - aud: {claims?.aud || "<none>"}<br /> */}
-        {/* - exp: {claims?.exp || "<none>"}<br /> */}
-        {/* - nbf: {claims?.nbf || "<none>"}<br /> */}
-        {/* - iat: {claims?.iat || "<none>"}<br /> */}
-        {/* - jti: {claims?.jti || "<none>"}<br /> */}
-        {/* - uid: {claims?.uid || "<none>"}<br /> */}
-        {/* show all claims as list */}
         Claims:
         <ul>
           {claims ? Object.entries(claims).map(([key, value]) => (
