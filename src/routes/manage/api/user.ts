@@ -79,7 +79,11 @@ router.put("/:id", (req, res) => {
 router.post("/", (req, res) => {
   const { id, displayName, isInitialized } = req.body;
   prisma.user.create({
-    data: { id, displayName, isInitialized },
+    data: { 
+      id: id || undefined,
+      displayName,
+      isInitialized
+    },
   })
     .then((user) => {
       res.status(201).json(user);
