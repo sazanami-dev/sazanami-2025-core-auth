@@ -1,54 +1,50 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-    <meta charset="UTF-8">
-    <title>管理画面</title>
-    <link rel="stylesheet" href="index.css">
+  <meta charset="UTF-8">
+  <title>管理画面</title>
+  <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
 
-    <header class="auth-header">
-        <label>認証ステータス:</label>
-        <span id="auth-status">未確認</span>
-        <button id="auth-check-button">再確認</button>
-    </header>
+  <header class="auth-header">
+    <label>Auth Status:</label>
+    <span id="auth-status">Unknown</span>
+    <button id="auth-check-button">Recheck</button>
+  </header>
 
-    <div class="layout-container">
+  <div class="layout-container">
 
-        <main class="main-content">
-            <nav class="tab-nav">
-                <button class="tab-button active" data-tab="user-tab">ユーザー管理</button>
-                <button class="tab-button" data-tab="session-tab">セッション管理</button>
-                <button class="tab-button" data-tab="redirect-tab">リダイレクト監視</button>
-            </nav>
+    <main class="main-content">
+      <nav class="tab-nav">
+        <button class="tab-button active" data-tab="home-tab">Home</button>
+        <button class="tab-button" data-tab="settings-tab">Quick actions</button>
+        <button class="tab-button" data-tab="user-tab">User</button>
+        <button class="tab-button" data-tab="session-tab">Session</button>
+        <button class="tab-button" data-tab="regcode-tab">regCode</button>
+      </nav>
+      <section id="home-tab" class="tab-content active">
+        <h2>HOME</h2>
+      </section>
+      <section id="settings-tab" class="tab-content">
+      </section>
+      <section id="user-tab" class="tab-content">
+      </section>
+      <section id="session-tab" class="tab-content">
+      </section>
+      <section id="regcode-tab" class="tab-content">
+    </main>
 
-            <section id="user-tab" class="tab-content active">
-                <h2>ユーザー管理</h2>
-                <p>ここはユーザー管理のコンテンツが入ります。</p>
-                <button id="dummy-action-1">ダミー操作 (ユーザー)</button>
-            </section>
+    <aside class="log-viewer">
+      <h3>LogViewer</h3>
+      <pre id="log-output"></pre>
+    </aside>
 
-            <section id="session-tab" class="tab-content">
-                <h2>セッション管理</h2>
-                <p>ここはセッション管理のコンテンツが入ります。</p>
-                <button id="dummy-action-2">ダミー操作 (セッション)</button>
-            </section>
+  </div>
 
-            <section id="redirect-tab" class="tab-content">
-                <h2>リダイレクト監視</h2>
-                <p>ここはリダイレクト監視のコンテンツが入ります。</p>
-                <button id="dummy-action-3">ダミー操作 (リダイレクト)</button>
-            </section>
-
-        </main>
-
-        <aside class="log-viewer">
-            <h3>ログビュー</h3>
-            <pre id="log-output"></pre>
-        </aside>
-
-    </div>
-
-    <script src="index.js"></script>
+  <script src="index.js"></script>
 </body>
+
 </html>
