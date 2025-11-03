@@ -6,7 +6,7 @@ type EventType = "MESSAGE" | "JSON";
 export async function registEventLog(
   category: EventCategory = "OTHER",
   type: EventType = "MESSAGE",
-  message: string,
+  payload: string,
   reporter?: string
 ) {
   try {
@@ -14,7 +14,7 @@ export async function registEventLog(
       data: {
         category,
         eventType: type,
-        payload: message,
+        payload: payload,
         reporter: reporter || "UNKNOWN",
       },
     });
