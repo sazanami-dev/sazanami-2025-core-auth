@@ -27,6 +27,8 @@ router.get('/', async (req, res) => {
 
   const { redirectUrl, postbackUrl, state } = pendingRedirect;
 
+  // このへんのロジックがauthenticate.tsと重複しているので共通化したい
+
   // Validate redirectUrl and postbackUrl
   try {
     new URL(redirectUrl!);
