@@ -10,10 +10,10 @@ const router = Router();
 const logger = new Logger('routes', 'i');
 
 router.get('/', async (req, res) => {
-  const userWithSession = await verifyAndGetUserHelper(req);
-  if (!userWithSession) {
+  const userWithSession = await verifyAndGetUserHelper(req).catch((e) => {
+    logger.error(`Failed to verify user session: ${e}`);
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
-  }
+  });
 
   const filteredUserWithSession: ApiUserWithSession = {
     id: userWithSession.id,
@@ -25,10 +25,10 @@ router.get('/', async (req, res) => {
 });
 
 router.put('/', async (req, res) => {
-  const userWithSession = await verifyAndGetUserHelper(req);
-  if (!userWithSession) {
+  const userWithSession = await verifyAndGetUserHelper(req).catch((e) => {
+    logger.error(`Failed to verify user session: ${e}`);
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
-  }
+  });
 
   let updateData: Partial<User>;
 
@@ -50,7 +50,7 @@ router.put('/', async (req, res) => {
 router.post('/activate', async (req, res) => {
   const userWithSession = await verifyAndGetUserHelper(req).catch((e) => {
     logger.error(`Failed to verify user session: ${e}`);
-    DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
+    return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   });
 
   const updateData: Partial<ApiUser> = {};
