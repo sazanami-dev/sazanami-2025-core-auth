@@ -14,6 +14,11 @@ export const UserWithSessionSchema = UserSchema.extend({
   hasPendingRedirect: z.boolean().openapi({ description: 'ユーザーに保留中のリダイレクトがあるかどうか', example: false }),
 }).openapi('UserWithSession');
 
+export const ApiUserWithSessionSchema = ApiUserSchema.extend({
+  hasPendingRedirect: z.boolean().openapi({ description: 'ユーザーに保留中のリダイレクトがあるかどうか', example: false }),
+}).openapi('ApiUserWithSession');
+
 export type User = z.infer<typeof UserSchema>;
 export type UserWithSession = z.infer<typeof UserWithSessionSchema>;
 export type ApiUser = z.infer<typeof ApiUserSchema>;
+export type ApiUserWithSession = z.infer<typeof ApiUserWithSessionSchema>;
