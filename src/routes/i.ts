@@ -1,7 +1,7 @@
 import { Request, Router } from "express";
 import { DoResponse } from "@/utils/do-resnpose";
 import { getUserWithSessionBySessionId } from "@/services/auth/user";
-import { UserSchema, UserWithSession, UserWithSessionSchema, User } from "@/schemas/object/User";
+import { UserSchema, UserWithSession, UserWithSessionSchema, User, ApiUserWithSession, ApiUserWithSessionSchema, ApiUserSchema, ApiUser } from "@/schemas/object/User";
 import { updateUserById } from "@/services/auth/user";
 import Logger from "@/logger";
 import { verifyToken } from "@/services/auth/token";
@@ -15,7 +15,13 @@ router.get('/', async (req, res) => {
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   }
 
-  return DoResponse.init(res).ok().validatedJson(userWithSession, UserWithSessionSchema).send();
+  const filteredUserWithSession: ApiUserWithSession = {
+    id: userWithSession.id,
+    displayName: userWithSession.displayName,
+    hasPendingRedirect: userWithSession.hasPendingRedirect,
+  };
+
+  return DoResponse.init(res).ok().validatedJson(filteredUserWithSession, ApiUserWithSessionSchema).send();
 });
 
 router.put('/', async (req, res) => {
@@ -27,7 +33,7 @@ router.put('/', async (req, res) => {
   let updateData: Partial<User>;
 
   try {
-    updateData = UserSchema.partial().parse(req.body);
+    updateData = ApiUserSchema.partial().parse(req.body);
   } catch (e) {
     logger.error('Failed to update user', e as string);
     return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
@@ -37,6 +43,33 @@ router.put('/', async (req, res) => {
     logger.error('Failed to update user', err);
     return DoResponse.init(res).internalServerError().errorMessage('Failed to update user').send();
   });
+
+  return DoResponse.init(res).ok().validatedJson(updatedUser, UserSchema).send();
+});
+
+router.post('/activate', async (req, res) => {
+  const userWithSession = await verifyAndGetUserHelper(req).catch((e) => {
+    logger.error(`Failed to verify user session: ${e}`);
+    DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
+  });
+
+  const updateData: Partial<ApiUser> = {};
+
+  try {
+    Object.assign(updateData, ApiUserSchema.partial().parse(req.body));
+  } catch (e) {
+    logger.error('Failed to activate user - invalid request body', e as string);
+    return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
+  }
+
+  const updatedUser = await updateUserById(userWithSession!.id,
+    {
+      isInitialized: true,
+      displayName: updateData.displayName
+    }).catch(err => {
+      logger.error('Failed to activate user', err);
+      return DoResponse.init(res).internalServerError().errorMessage('Failed to activate user').send();
+    });
 
   return DoResponse.init(res).ok().validatedJson(updatedUser, UserSchema).send();
 });
