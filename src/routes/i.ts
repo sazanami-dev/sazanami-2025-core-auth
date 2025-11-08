@@ -1,7 +1,7 @@
 import { Request, Router } from "express";
 import { DoResponse } from "@/utils/do-resnpose";
 import { getUserWithSessionBySessionId } from "@/services/auth/user";
-import { UserSchema, UserWithSession, UserWithSessionSchema, User, ApiUserWithSession, ApiUserWithSessionSchema, ApiUserSchema, ApiUser } from "@/schemas/object/User";
+import { UserSchema, UserWithSession, ApiUserWithSession, ApiUserWithSessionSchema, ApiUserSchema, ApiUser } from "@/schemas/object/User";
 import { updateUserById } from "@/services/auth/user";
 import Logger from "@/logger";
 import { verifyToken } from "@/services/auth/token";
