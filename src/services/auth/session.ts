@@ -18,7 +18,9 @@ async function verifySessionIdAndResolveUser(sessionId: string) {
 * 新しい匿名セッションを作成する
 */
 async function createAnonymousSession() {
-  const session = await prisma.session.create({});
+  const session = await prisma.session.create({
+    data: {}
+  });
 
   return session;
 }
