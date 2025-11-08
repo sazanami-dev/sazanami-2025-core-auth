@@ -52,10 +52,11 @@ router.get('/', async (req, res) => {
 
   // Validate redirectUrl and postbackUrl
   try {
-    new URL(redirectUrl);
-    if (postbackUrl) new URL(postbackUrl);
+    new URL(redirectUrl!);
+    if (postbackUrl) new URL(postbackUrl!);
   } catch (e) {
-    // return DoResponse.init(res).badRequest().errorMessage('Invalid redirectUrl').send();
+    const errorPageUrl = makeErrorPageUrlHelper('INVALID_URL', '無効なURLです。', 'redirectUrl or postbackUrl is not a valid URL.');
+    return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
 
   // Postback
@@ -72,12 +73,13 @@ router.get('/', async (req, res) => {
         }),
       });
     } catch (e) {
-      return DoResponse.init(res).badRequest().errorMessage('Failed to post to postbackUrl').send();
+      const errorPageUrl = makeErrorPageUrlHelper('POSTBACK_FAILED', '連携先との接続に失敗しました。', 'Failed to postback to the specified URL.');
+      return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
     }
   }
 
   // Redirect
-  const url = new URL(redirectUrl);
+  const url = new URL(redirectUrl!);
   if (!postbackUrl) {
     url.searchParams.append('token', token);
     if (state) {
