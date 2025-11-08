@@ -30,12 +30,12 @@ router.put('/', async (req, res) => {
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   });
 
-  let updateData: Partial<User>;
+  let updateData: Partial<ApiUser> = {};
 
   try {
     updateData = ApiUserSchema.partial().parse(req.body);
   } catch (e) {
-    logger.error('Failed to update user', e as string);
+    logger.error('Failed to activate user - invalid request body', e as string);
     return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
   }
 
@@ -53,10 +53,10 @@ router.post('/activate', async (req, res) => {
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   });
 
-  const updateData: Partial<ApiUser> = {};
+  let updateData: Partial<ApiUser> = {};
 
   try {
-    Object.assign(updateData, ApiUserSchema.partial().parse(req.body));
+    updateData = ApiUserSchema.partial().parse(req.body);
   } catch (e) {
     logger.error('Failed to activate user - invalid request body', e as string);
     return DoResponse.init(res).badRequest().errorMessage('Invalid request body').send();
