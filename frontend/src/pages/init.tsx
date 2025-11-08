@@ -40,13 +40,14 @@ export default function InitializePage() {
       .catch((error) => {
         console.error("Error verifying token:", error)
       })
-  } 
+  }
 
   async function activateUser(api: ReturnType<typeof useApi>, username: string) {
     return api.post('/activate', { displayName: username })
       .then((response) => {
-      console.log("Activate response data:", response.data)
-  });
+        console.log("Activate response data:", response.data)
+      });
+  }
 
 
   return <>
