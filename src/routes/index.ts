@@ -5,6 +5,7 @@ import initializeRoute from "./initialize";
 import wellKnownRoute from "./well-known";
 import verifyRoute from "./verify";
 import manageRoute from "./manage";
+import redirectRoute from "./redirect";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/initialize', initializeRoute);
 router.use('/.well-known', wellKnownRoute);
 router.use('/verify', verifyRoute);
 router.use('/manage', manageRoute);
+router.use('/redirect', redirectRoute);
 
 export default router;
