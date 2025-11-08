@@ -3,8 +3,10 @@ import { getPendingRedirect } from "@/services/auth/pending-redirect";
 import { DoResponse } from "@/utils/do-resnpose";
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 import { makeErrorPageUrlHelper } from "@/utils/make-error-page-url-helper";
+import Logger from "@/logger";
 
 const router = Router();
+const logger = new Logger('routes', 'redirect');
 
 router.get('/', async (req, res) => {
   const sessionId = req.cookies?.sessionId as string | undefined;
@@ -34,6 +36,7 @@ router.get('/', async (req, res) => {
     new URL(redirectUrl!);
     if (postbackUrl) new URL(postbackUrl!);
   } catch (e) {
+    logger.error(`URL validation failed: ${e}`);
     const errorPageUrl = makeErrorPageUrlHelper('INVALID_URL', '無効なURLです。', 'redirectUrl or postbackUrl is not a valid URL.');
     return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
