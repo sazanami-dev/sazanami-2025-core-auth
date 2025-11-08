@@ -4,32 +4,30 @@ import { Button } from "@heroui/button"
 import { useEffect, useState } from "react"
 import { VerifyResponseSchema } from "@/types/api/verify"
 import { TokenClaims } from "@/types/tokenClaims"
+import useApi from "@/hooks/useApi"
 
 export default function InitializePage() {
-  // クエリパラメータの取得
-  const token = new URLSearchParams(window.location.search).get("token") || ""
 
-  // debug(reactive state)
+  const token = new URLSearchParams(window.location.search).get("token") || ""
   const [claims, setClaims] = useState<TokenClaims | null>(null)
   const [isWaitingVerify, setWaitingVerify] = useState<boolean>(true)
   const [isVaidToken, setVaidToken] = useState<boolean>(false)
 
-  // 1 Verity token with api call (POST)
-  // Workaround
-  const API_BASE_URL = "http://localhost:3000"
-
   useEffect(() => {
-    fetch(`${API_BASE_URL}/verify`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Verify response data:", data)
-        const parsed = VerifyResponseSchema.safeParse(data)
+    const api = useApi(token)
+    // Call verify function
+    verifyToken(api, token).then(() => {
+      if (isWaitingVerify) {
+        setWaitingVerify(false)
+      }
+    });
+  }, [token])
+
+  async function verifyToken(api: ReturnType<typeof useApi>, token: string) {
+    return api.post('/verify', { token })
+      .then((response) => {
+        console.log("Verify response data:", response.data)
+        const parsed = VerifyResponseSchema.safeParse(response.data)
         if (parsed.success) {
           setVaidToken(parsed.data.valid)
           if (parsed.data.valid && parsed.data.payload) {
@@ -42,7 +40,13 @@ export default function InitializePage() {
       .catch((error) => {
         console.error("Error verifying token:", error)
       })
-  }, [token])
+  } 
+
+  async function activateUser(api: ReturnType<typeof useApi>, username: string) {
+    return api.post('/activate', { displayName: username })
+      .then((response) => {
+      console.log("Activate response data:", response.data)
+  });
 
 
   return <>
