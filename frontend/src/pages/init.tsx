@@ -13,10 +13,12 @@ export default function InitializePage() {
   const [isWaitingVerify, setWaitingVerify] = useState<boolean>(true)
   const [isVaidToken, setVaidToken] = useState<boolean>(false)
 
+  const [username, setUsername] = useState<string>("")
+
   useEffect(() => {
-    const api = useApi(token)
+    const apiInstance = useApi(token || "")
     // Call verify function
-    verifyToken(api, token).then(() => {
+    verifyToken(apiInstance, token).then(() => {
       if (isWaitingVerify) {
         setWaitingVerify(false)
       }
@@ -43,12 +45,11 @@ export default function InitializePage() {
   }
 
   async function activateUser(api: ReturnType<typeof useApi>, username: string) {
-    return api.post('/activate', { displayName: username })
+    return api.post('/i/activate', { displayName: username })
       .then((response) => {
         console.log("Activate response data:", response.data)
       });
   }
-
 
   return <>
     <div className="flex flex-col justify-center items-center min-h-screen p-4">
@@ -63,8 +64,8 @@ export default function InitializePage() {
           variant="bordered"
           label="ユーザー名"
           placeholder="トライデント太郎"
-          // value={username}
-          // onChange={(e) => setUsername(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           classNames={{
             mainWrapper: "w-full",
           }}
@@ -72,7 +73,11 @@ export default function InitializePage() {
       </div>
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md">
         <Button className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-full shadow-lg w-full"
-        // onClick={() => activateUser(username)}>
+          disabled={isWaitingVerify || !isVaidToken || username.trim().length === 0}
+          onPress={() => {
+            const api = useApi(token || "")
+            activateUser(api, username.trim())
+          }}
         >
           登録
         </Button>
