@@ -4,12 +4,13 @@ import { getUserWithSessionBySessionId } from "@/services/auth/user";
 import { UserSchema, UserWithSession, UserWithSessionSchema, User } from "@/schemas/object/User";
 import { updateUserById } from "@/services/auth/user";
 import Logger from "@/logger";
+import { verifyToken } from "@/services/auth/token";
 
 const router = Router();
 const logger = new Logger('routes', 'i');
 
 router.get('/', async (req, res) => {
-  const userWithSession = await verifySessionAndGetUserHelper(req);
+  const userWithSession = await verifyAndGetUserHelper(req);
   if (!userWithSession) {
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   }
@@ -18,7 +19,7 @@ router.get('/', async (req, res) => {
 });
 
 router.put('/', async (req, res) => {
-  const userWithSession = await verifySessionAndGetUserHelper(req);
+  const userWithSession = await verifyAndGetUserHelper(req);
   if (!userWithSession) {
     return DoResponse.init(res).unauthorized().errorMessage('Unauthorized').send();
   }
@@ -41,16 +42,34 @@ router.put('/', async (req, res) => {
 });
 
 // Helper function to verify session
-async function verifySessionAndGetUserHelper(req: Request): Promise<UserWithSession | null> {
-  const cookies = req.cookies;
-  const sessionId = cookies ? (cookies.sessionId as string | undefined) : undefined;
+async function verifyAndGetUserHelper(req: Request): Promise<UserWithSession | null> {
+  let sessionId: string | undefined = undefined;
+
+  // Check Authorization header first
+  if (req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.split(' ')[1];
+    if (token) {
+      const tokenClaims = await verifyToken(token);
+      if (tokenClaims) {
+        sessionId = tokenClaims.sub;
+      } else {
+        throw new Error('Invalid token in Authorization header');
+      }
+    }
+  }
+
   if (!sessionId) {
-    return null;
+    const cookies = req.cookies;
+    sessionId = cookies ? (cookies.sessionId as string | undefined) : undefined;
   }
+
+  if (!sessionId) throw new Error('No session ID found');
+
   const userWithSession = await getUserWithSessionBySessionId(sessionId).catch(() => null);
-  if (!userWithSession) {
-    return null;
-  }
+
+  if (!userWithSession) throw new Error('User not found for session ID: ' + sessionId);
+
   return userWithSession;
 }
 
