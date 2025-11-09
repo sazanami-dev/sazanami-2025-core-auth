@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { VerifyResponseSchema } from "@/types/api/verify"
 import { TokenClaims } from "@/types/tokenClaims"
 import useApi from "@/hooks/useApi"
+import { IResponseSchema } from "@/types/api/i"
 
 export default function InitializePage() {
 
@@ -51,6 +52,38 @@ export default function InitializePage() {
       });
   }
 
+  async function hasPendingRedirect(api: ReturnType<typeof useApi>) {
+    return api.get('/i', {}).then((response) => {
+      let userData;
+      try {
+        userData = IResponseSchema.parse(response.data)
+      } catch (e) {
+        console.error("Invalid response schema:", e)
+        return false
+      }
+      return userData.hasPendingRedirect
+    }).catch((error) => {
+      console.error("Error fetching user data:", error)
+      return false
+    });
+  }
+
+  async function activateButtonCallback(api: ReturnType<typeof useApi>, username: string) {
+    let redirectTarget = "";
+    // Activate user
+    await activateUser(api, username)
+
+    const hasRedirect = await hasPendingRedirect(api)
+    if (hasRedirect) {
+      redirectTarget = "/redirect"; // Redirect handler
+    } else {
+      redirectTarget = "/fe"; // Portal page
+    }
+
+    // Redirect
+    window.location.href = redirectTarget
+  }
+
   return <>
     <div className="flex flex-col justify-center items-center min-h-screen p-4">
       <FloatingBubbles />
@@ -74,9 +107,9 @@ export default function InitializePage() {
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md">
         <Button className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-full shadow-lg w-full"
           disabled={isWaitingVerify || !isVaidToken || username.trim().length === 0}
-          onPress={() => {
+          onPress={async () => {
             const api = useApi(token || "")
-            activateUser(api, username.trim())
+            await activateButtonCallback(api, username.trim())
           }}
         >
           登録
