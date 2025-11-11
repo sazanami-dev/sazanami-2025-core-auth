@@ -13,7 +13,12 @@ export default function ReauthPage() {
     currentUrl.pathname = '/initialize';
     currentUrl.searchParams.set('regCode', regCode);
     window.location.href = currentUrl.toString();
+  }
 
+  const redirectToRegister = () => {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.pathname = '/fe/regist';
+    window.location.href = currentUrl.toString();
   }
 
   return <>
@@ -55,9 +60,10 @@ export default function ReauthPage() {
             <p>下のボタンから登録を行ってください。</p>
             <div className="flex justify-center mt-4">
               <Button
-                className="w-md mt-5"
+                className="w-md my-5"
                 color="primary"
                 variant="shadow"
+                onPress={redirectToRegister}
               >登録ページ</Button>
             </div>
           </AccordionItem>
