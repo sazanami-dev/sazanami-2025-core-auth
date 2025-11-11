@@ -1,3 +1,4 @@
+import { issueRegCodeForUser } from "@/services/auth/regCode";
 import { generateUser } from "@/services/auth/user";
 import { DoResponse } from "@/utils/do-resnpose";
 import { Router } from "express";
@@ -9,10 +10,15 @@ const router = Router();
 router.post('/', async (req, res) => {
   // Generate new user
   const newUser = await generateUser();
-  return DoResponse.init(res).json({
-    success: true,
-    userId: newUser.id,
-  });
+  // return DoResponse.init(res).json({
+  //   success: true,
+  //   userId: newUser.id,
+  // });
+  const regCode = await issueRegCodeForUser(newUser.id);
+
+  return DoResponse.init(res).ok().json({
+    regCode,
+  }).send();
 
   // TODO: エラーハンドリング
   // TODO: レートリミットを考える?
