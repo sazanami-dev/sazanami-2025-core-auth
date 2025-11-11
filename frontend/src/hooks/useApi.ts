@@ -3,13 +3,14 @@ import useEnv from './useEnv';
 
 const apiBaseUrl = useEnv('API_BASE_URL', 'http://localhost:3000');
 
-const useApi = (token: string) => {
-  const instance = axios.create({
+const useApi = (token?: string) => {
+  const options = {
     baseURL: apiBaseUrl,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: token ? `Bearer ${token}` : '',
     },
-  });
+  };
+  const instance = axios.create(options);
 
   return {
     get: instance.get,
