@@ -27,6 +27,9 @@
   "description": "",
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.1.0",
+    "@heroui/code": "^2.2.21",
+    "@heroui/system": "^2.4.23",
+    "@heroui/theme": "^2.4.23",
     "@prisma/client": "^6.14.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/uuid": "^10.0.0",
@@ -38,11 +41,13 @@
     "dotenv-cli": "^10.0.0",
     "express": "^5.1.0",
     "extensionless": "^1.9.9",
+    "framer-motion": "^12.23.24",
     "http-proxy-middleware": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "jwk-to-pem": "^2.0.7",
     "nanoid": "^5.1.5",
     "node-cron": "^4.2.1",
+    "tailwindcss": "^4.0.0",
     "tsc-alias": "^1.8.16",
     "uuid": "^13.0.0",
     "zod": "^4.1.1"
