@@ -18,7 +18,7 @@ export class InvalidEnvTypeError extends Error {
   }
 }
 
-function createEnvConfig<T extends Record<string, { type: 'string' | 'number' | 'boolean'; default: any }>>(config: T) {
+function createEnvConfig<T extends Record<string, { type: 'string' | 'number' | 'eval-number' | 'boolean'; default: any }>>(config: T) {
   const keys = Object.keys(config).reduce((acc, key) => {
     (acc as any)[key] = key;
     return acc;
@@ -35,15 +35,16 @@ export const { config: envDefinitions, keys: EnvKey } = createEnvConfig({
   UID_LENGTH: { type: 'number', default: 8 },
   JWT_SECRET: { type: 'string', default: 'your-secret' },
   CLIENT_ORIGIN: { type: 'string', default: 'http://localhost:5173' },
-  ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' }, 
+  ACCOUNT_INITIALIZATION_PAGE: { type: 'string', default: 'http://localhost:5173/init-account' },
   REAUTHENTICATION_PAGE: { type: 'string', default: 'http://localhost:5173/reauth' },
   PORTAL_PAGE: { type: 'string', default: 'http://localhost:5173/' },
   ERROR_PAGE: { type: 'string', default: 'http://localhost:5173/error' },
   TOKEN_SIGN_KEY_PATH: { type: 'string', default: '/data/key/private.pem' },
-  TOKEN_DEFAULT_EXPIRATION: { type: 'number', default: 60 * 60 * 24 * 1 }, // 1 day
+  TOKEN_DEFAULT_EXPIRATION: { type: 'eval-number', default: 60 * 60 * 24 * 1 }, // 1 day
   TOKEN_DEFAULT_ISSUER: { type: 'string', default: 'sazanami-core-auth' },
   TOKEN_SIGN_KEY_DEFAULT_KID: { type: 'string', default: 'default' },
   MANAGE_API_KEY: { type: 'string', default: 'change-this-manage-api-master-key' },
+  SESSION_COOKIE_EXPIRATION: { type: 'eval-number', default: 1000 * 60 * 60 * 24 * 2 }, // 2 days
 });
 
 type EnvConfig = typeof envDefinitions;
@@ -51,6 +52,7 @@ export type EnvKey = keyof EnvConfig;
 type EnvValueType<K extends EnvKey> =
   EnvConfig[K]['type'] extends 'string' ? string :
   EnvConfig[K]['type'] extends 'number' ? number :
+  EnvConfig[K]['type'] extends 'eval-number' ? number :
   EnvConfig[K]['type'] extends 'boolean' ? boolean : never;
 
 export class EnvUtil {
@@ -73,6 +75,17 @@ export class EnvUtil {
           throw new Error(`Env ${key} must be a number, but got "${raw}"`);
         }
         return n as EnvValueType<K>;
+      case 'eval-number':
+        try {
+          // eslint-disable-next-line no-eval
+          const evaled = eval(raw);
+          if (typeof evaled !== 'number' || Number.isNaN(evaled)) {
+            throw new Error();
+          }
+          return evaled as EnvValueType<K>;
+        } catch {
+          throw new Error(`Env ${key} must be an evaluable number expression, but got "${raw}"`);
+        }
       case 'boolean':
         if (raw === 'true' || raw === 'false') {
           return (raw === 'true') as EnvValueType<K>;
