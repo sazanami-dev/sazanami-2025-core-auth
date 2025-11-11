@@ -1,3 +1,4 @@
+import FloatingBubbles from "@/components/floating-bubble";
 import useApi from "@/hooks/useApi"
 import { RegisterResponseSchema } from "@/types/api/register"
 import { Button } from "@heroui/button"
@@ -11,6 +12,13 @@ export default function RegistPage() {
   const [isIssued, setIssued] = useState<boolean>(false)
   const [regCode, setRegCode] = useState<string>("")
   const api = useMemo(() => useApi(), [])
+
+  const redirectToInitialize = (regCode: string) => {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.pathname = '/initialize';
+    currentUrl.searchParams.set('regCode', regCode);
+    window.location.href = currentUrl.toString();
+  }
 
   const issueRegCode = async () => {
     try {
@@ -47,6 +55,7 @@ export default function RegistPage() {
 
   return <>
     <div className="flex flex-col justify-center items-center min-h-screen w-full">
+      <FloatingBubbles />
       <div>
         <h1 className="text-3xl mb-4">アカウントの新規発行</h1>
       </div>
@@ -65,6 +74,7 @@ export default function RegistPage() {
             className="mt-6"
             variant="shadow"
             color="primary"
+            onPress={() => redirectToInitialize(regCode)}
           >アカウントの初期設定ページへ</Button>
         </>
       ) : (
