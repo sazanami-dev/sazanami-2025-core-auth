@@ -13,7 +13,6 @@ function App() {
       <Route path="/reauth" element={<ReauthPage />} />
       <Route path="/error" element={<ErrorPage />} />
       <Route path="/regist" element={<RegistPage />} />
-      
     </Routes>
   );
 }
