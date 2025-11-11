@@ -4,7 +4,7 @@ import { createAuthenticatedSession, isAnonymousSession } from "@/services/auth/
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 import { EnvKey, EnvUtil } from "@/utils/env-util";
 import { verifyRegCodeAndResolveUser } from "@/services/auth/regCode";
-import { PendingRedirect } from "@prisma/client";
+import { PendingRedirect, User } from "@prisma/client";
 import { createPendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
 import { makeErrorPageUrlHelper } from "@/utils/make-error-page-url-helper";
 import Logger from "@/logger";
@@ -12,58 +12,66 @@ import Logger from "@/logger";
 const router = Router();
 const logger = new Logger('route', 'initialize');
 
-const SESSION_COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 2; // 2 days
+const SESSION_COOKIE_MAX_AGE = EnvUtil.get(EnvKey.SESSION_COOKIE_EXPIRATION);
 
 router.get('/', async (req, res) => {
-  const reqCode = req.query.regCode as string | undefined;
-  if (!reqCode) {
+  const regCode = req.query.regCode as string | undefined;
+  let user: User | null = null;
+  let sessionId: string | undefined;
+  let pendingRedirect: PendingRedirect | null = null;
+
+  if (!regCode) {
     const errorPageUrl = makeErrorPageUrlHelper('REQUIRED_PARAMETER_MISSING', '必須パラメーターが欠落しています。', 'regCode query parameter is required!');
     return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
 
-  const user = await verifyRegCodeAndResolveUser(reqCode).catch(() => null);
-  if (!user) {
-    const errorPageUrl = makeErrorPageUrlHelper('INVALID_REGCODE', '無効な登録コードです。', 'The provided regCode is invalid or has already been used.');
+  try {
+    user = await verifyRegCodeAndResolveUser(regCode);
+    if (!user) {
+      throw new Error(); // 直後で拾うので
+    }
+  } catch (e) {
+    logger.error(`Failed to verify regCode: ${e}`);
+    const errorPageUrl = makeErrorPageUrlHelper('INVALID_REGCODE', '無効な登録コードです。', 'regCode is invalid or expired.');
     return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
 
-  const { sessionId: oldSessionId } = req.cookies;
-  let pendingRedirect: PendingRedirect | null = null;
-
-  if (oldSessionId) {
-    const isAnonymous = await isAnonymousSession(oldSessionId);
-
-    if (isAnonymous) {
-      pendingRedirect = await getPendingRedirect(oldSessionId);
-    } else if (user.isInitialized) {
-      logger.info(`User ${user.id} attempted to re-initialize but is already initialized. Redirecting to portal.`);
-      return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.PORTAL_PAGE)).send();
+  if (req.cookies && req.cookies.sessionId) {
+    pendingRedirect = await getPendingRedirect(req.cookies.sessionId);
+    if (!await isAnonymousSession(req.cookies.sessionId)) {
+      sessionId = req.cookies.sessionId;
+    } else {
+      sessionId = await createAuthenticatedSession(user.id).then(session => session.id);
     }
+  } else {
+    sessionId = await createAuthenticatedSession(user.id).then(session => session.id);
   }
 
-  const newSession = await createAuthenticatedSession(user.id);
-  const newSessionId = newSession.id;
-
-  if (pendingRedirect) {
-    await createPendingRedirect(
-      newSessionId,
-      pendingRedirect.redirectUrl ?? undefined,
-      pendingRedirect.postbackUrl ?? undefined,
-      pendingRedirect.state ?? undefined
-    );
-  }
-
-  res.cookie('sessionId', newSessionId, {
+  res.cookie('sessionId', sessionId, {
     httpOnly: true,
     sameSite: 'lax',
     maxAge: SESSION_COOKIE_MAX_AGE,
   });
 
-  const token = await issueToken(await makeClaimsHelper(newSessionId));
+  if (user.isInitialized) {
+    if (pendingRedirect) {
+      // Pending redirectがある場合はそれを処理させる
+      return DoResponse.init(res).redirect('/redirect').send();
+    } else {
+      // そうでなければポータルに飛ばす
+      return DoResponse.init(res).redirect(EnvUtil.get(EnvKey.PORTAL_PAGE)).send();
+    }
+  } else {
+    if (pendingRedirect) {
+      await createPendingRedirect(sessionId!, pendingRedirect.redirectUrl ?? undefined, pendingRedirect.postbackUrl ?? undefined, pendingRedirect.state ?? undefined);
+    }
+  }
+
+  const token = await issueToken(await makeClaimsHelper(sessionId!));
   const url = new URL(EnvUtil.get(EnvKey.ACCOUNT_INITIALIZATION_PAGE));
   url.searchParams.append('token', token);
 
-  logger.info(`Redirecting to account initialization page for user ${user.id}`);
+  logger.info(`User ${user.id} initialized. Redirecting to initialization page.`);
   return DoResponse.init(res).redirect(url.toString()).send();
 });
 
