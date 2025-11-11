@@ -46,4 +46,11 @@ async function updateUserById(userId: string, data: Partial<User>): Promise<User
   return updatedUser;
 }
 
-export { getUserById, getUserWithSessionBySessionId, updateUserById };
+async function generateUser(): Promise<User> {
+  const newUser = await prisma.user.create({
+    data: {}
+  });
+  return newUser;
+}
+
+export { getUserById, getUserWithSessionBySessionId, updateUserById, generateUser };
