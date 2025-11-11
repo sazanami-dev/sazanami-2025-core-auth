@@ -46,19 +46,10 @@ export default function RegistPage() {
   }, [])
 
   return <>
-    {/* {isIssued && <div> */}
-    {/*   <h2>Your Registration Code:</h2> */}
-    {/*   <p style={{ fontSize: "24px", fontWeight: "bold" }}>{regCode}</p> */}
-    {/*   <p>Please save this code securely. You will need it to register your account.</p> */}
-    {/* </div>} */}
     <div className="flex flex-col justify-center items-center min-h-screen w-full">
       <div>
         <h1 className="text-3xl mb-4">アカウントの新規発行</h1>
       </div>
-      {/* コードは再ログインや別のデバイスでのログイン時にも必要 */}
-      {/* <Button onPress={issueRegCode} disabled={isIssued} className=""> */}
-      {/*   {isIssued ? "Registration Code Issued" : "Issue Registration Code"} */}
-      {/* </Button> */}
       {isIssued ? (
         <>
           <div className="flex flex-col items-center">
@@ -77,7 +68,11 @@ export default function RegistPage() {
           >アカウントの初期設定ページへ</Button>
         </>
       ) : (
-        <Button onPress={issueRegCode} className="mt-4">
+        <Button
+          color="primary"
+          onPress={issueRegCode}
+          className="mt-4"
+        >
           登録コードを発行する
         </Button>
       )}
