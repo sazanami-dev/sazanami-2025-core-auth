@@ -8,4 +8,8 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths(), tailwindcss()],
   
   base: '/fe/',
+  
+  build: {
+    outDir: '../public/fe',
+  }
 });
