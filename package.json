@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "dotenv -e .env -- node --import=extensionless/register ./dist/index.js",
+    "start": "dotenv -e .env -- node --import=extensionless/register ./dist/src/index.js",
     "test": "vitest",
     "dev": "npm run dev:full",
     "dev:backend": "dotenv -e .env.dev -- npx tsx src/index.ts",
