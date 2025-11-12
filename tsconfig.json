@@ -4,7 +4,7 @@
     "module": "es2022",
     "outDir": "./dist",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "typeRoots": [
       "./node_modules/@types",
