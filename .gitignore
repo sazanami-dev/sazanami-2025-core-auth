@@ -7,6 +7,9 @@ dist
 
 .work/
 
+# FE Built files
+/public/fe
+
 # Logs
 frontend/logs
 frontend/*.log
