@@ -4,9 +4,9 @@ import Logger from '@/logger';
 import { EnvUtil, EnvKey } from '@/utils/env-util';
 import { fileURLToPath } from 'url';
 
-const logger = new Logger('boot', 'frontend');
-
 export const serveFrontend = (app: Express) => {
+  const logger = new Logger('boot', 'frontend');
+
   if (EnvUtil.get(EnvKey.NODE_ENV) === 'development') {
     logger.info('Skipping frontend serving in development mode.');
     logger.info('HINT: In development mode, the frontend is served by the Vite dev server.');
