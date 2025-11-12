@@ -14,4 +14,6 @@ RUN npm run db:generate
 
 RUN npm run build
 
+RUN npm run db:push
+
 CMD ["npm", "start"]
