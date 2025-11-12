@@ -7,6 +7,7 @@ import { testSignKey } from './boot/test-sign-key';
 import indexRouter from './routes';
 import { setupCronJobs } from './boot/cron';
 import { devFrontendProxy } from './boot/dev-frontend-proxy';
+import { serveFrontend } from './boot/serve-frontend';
 
 export const createApp = async () => {
   const app = express();
@@ -17,6 +18,8 @@ export const createApp = async () => {
   setupMiddlewares(app);
 
   devFrontendProxy(app);
+
+  serveFrontend(app);
 
   setupCronJobs();
 
