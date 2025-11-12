@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import path from 'path';
 import Logger from '@/logger';
 import { EnvUtil, EnvKey } from '@/utils/env-util';
+import { fileURLToPath } from 'url';
 
 const logger = new Logger('boot', 'frontend');
 
@@ -15,11 +16,13 @@ export const serveFrontend = (app: Express) => {
     return;
   }
 
-  const frontendPath = path.join(__dirname, '../../public/fe');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const frontendPath = path.join(__dirname, '../../../public/fe');
   logger.info(`Serving frontend static files from: ${frontendPath}`);
-  app.use('/fe/', express.static(frontendPath));
+  app.use('/fe', express.static(frontendPath));
 
-  app.get('/fe/*', (req, res) => {
+
+  app.get('/fe/{*any}', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
   
