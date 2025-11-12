@@ -10,6 +10,8 @@ COPY . .
 
 EXPOSE 3000
 
+RUN npm run db:generate
+
 RUN npm run build
 
 CMD ["npm", "start"]
