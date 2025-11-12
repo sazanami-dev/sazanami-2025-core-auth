@@ -20,7 +20,7 @@
     "build": "npm run build:full",
     "build:backend": "tsc && tsc-alias",
     "build:frontend": "npm --prefix frontend run build",
-    "build:full": "npm run build && npm run build:frontend"
+    "build:full": "npm run build:backend && npm run build:frontend"
   },
   "author": "rca@sazanami.dev",
   "license": "MIT",
