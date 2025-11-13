@@ -8,7 +8,7 @@
     "test": "vitest",
     "dev": "npm run dev:full",
     "dev:backend": "dotenv -e .env.dev -- npx tsx src/index.ts",
-    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:frontend": "dotenv -e .env.dev -- npm --prefix frontend run dev",
     "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "container:dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "container:dev:down": "docker compose -f docker-compose.dev.yml down",
