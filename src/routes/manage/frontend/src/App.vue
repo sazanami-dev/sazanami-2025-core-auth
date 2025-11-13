@@ -182,7 +182,6 @@ watch(
     <header class="app-header">
       <div class="brand-block">
         <h1>Management Console</h1>
-        <p>Operate users, sessions, and redirect data via the manage API.</p>
       </div>
       <div class="header-actions">
         <a-tag :color="authStatus.tone">{{ authStatus.label }}</a-tag>
