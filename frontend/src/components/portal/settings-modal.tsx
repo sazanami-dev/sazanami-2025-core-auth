@@ -2,7 +2,7 @@
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/modal';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export type Settings = {
   displayName: string;
@@ -19,6 +19,12 @@ export default function SettingsModal(props: SettingsModalProps) {
   const { isOpen, currentSettings, onSave, onClose } = props;
   const [settings, setSettings] = useState<Settings>(currentSettings || { displayName: "" });
 
+  useEffect(() => {
+    if (currentSettings) {
+      setSettings(currentSettings);
+    }
+  }, [currentSettings]);
+
   return <>
     <Modal isOpen={isOpen} onClose={onClose} title="設定">
       <ModalContent>
@@ -27,6 +33,7 @@ export default function SettingsModal(props: SettingsModalProps) {
         <ModalBody>
           <Input
             label="ユーザー名"
+            value={settings.displayName}
             onChange={(e) => setSettings({ ...settings, displayName: e.target.value })}
           />
         </ModalBody>
