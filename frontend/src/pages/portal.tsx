@@ -66,10 +66,18 @@ export default function PortalPage() {
   ]
 
   const [settings, setSettings] = useState<Settings>({ displayName: "" });
+  const [isLoggedInState, setIsLoggedInState] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Modal
   useEffect(() => {
+    fetchSettings();
+    isLoggedIn().then((loggedIn) => {
+      setIsLoggedInState(loggedIn);
+    });
+  }, []);
+
+  async function fetchSettings() {
     const api = useApi();
     api.get("/i").then((response) => {
       const data = IResponseSchema.parse(response.data);
@@ -77,7 +85,7 @@ export default function PortalPage() {
     }).catch((error) => {
       console.error("Failed to fetch user info:", error);
     });
-  }, []);
+  }
 
   async function updateSettings(newSettings: Settings) {
     const api = useApi();
@@ -89,16 +97,35 @@ export default function PortalPage() {
     } catch (error) {
       console.error("Failed to update settings:", error);
     }
+
+    fetchSettings();
   }
 
+  async function isLoggedIn(): Promise<boolean> {
+    const api = useApi();
+    try {
+      const response = await api.get("/check");
+      if (response.status === 200) {
+        return true;
+      } else if (response.status === 401) {
+        return false;
+      } else {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
 
   return <>
     <div className="container mx-auto p-4">
       <header className="flex flex-row justify-between items-center mb-4">
         <h1 className="text-2xl">ポータル</h1>
-        <Button isIconOnly variant="bordered" size="md" onPress={() => setIsSettingsModalOpen(true)}>
-          <PiGearDuotone className="text-xl" />
-        </Button>
+        {isLoggedInState &&
+          <Button isIconOnly variant="bordered" size="md" onPress={() => setIsSettingsModalOpen(true)}>
+            <PiGearDuotone className="text-xl" />
+          </Button>
+        }
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center w-full">
         {siteLinks.map((siteLink, index) => (
