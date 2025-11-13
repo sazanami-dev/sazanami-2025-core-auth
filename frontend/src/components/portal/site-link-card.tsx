@@ -1,0 +1,65 @@
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Image } from "@heroui/image";
+import { Link } from "@heroui/link";
+import { Chip } from "@heroui/chip";
+import { Button } from "@heroui/button";
+import { PiLinkSimpleDuotone } from "react-icons/pi";
+
+type SiteLinkCardProps = {
+  siteName: string;
+  siteUrl: string;
+  siteIconUrl?: string | null;
+  siteDescription: string;
+  siteTags: {
+    label: string;
+    color: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
+    variant: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow" | "dot";
+  }[];
+  linkUrl: string;
+}
+
+export default function SiteLinkCard(props: SiteLinkCardProps) {
+  const { siteName, siteUrl, siteIconUrl, siteDescription, siteTags, linkUrl } = props;
+
+  return <>
+    <Card className="max-w-[400px]">
+      <CardHeader className="flex gap-3">
+        {siteIconUrl &&
+          <Image
+            alt="サイトアイコン"
+            height={40}
+            radius="sm"
+            src={siteIconUrl || ""}
+            width={40}
+          />
+        }
+        <div className="flex flex-col">
+          <p className="text-md">{siteName}</p>
+          <p className="text-small text-default-500">{siteUrl}</p>
+        </div>
+        <div className="ml-auto flex items-center">
+          <Link href={linkUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="bordered" size="md" isIconOnly>
+              <PiLinkSimpleDuotone />
+            </Button>
+          </Link>
+        </div>
+      </CardHeader>
+      <Divider />
+      <CardBody>
+        <p>{siteDescription}</p>
+      </CardBody>
+      <Divider />
+      <CardFooter>
+        <div className="flex gap-2">
+          {siteTags.map((tag, index) => (
+            <Chip key={index} color={tag.color} variant={tag.variant}>
+              {tag.label}
+            </Chip>
+          ))}
+        </div>
+      </CardFooter>
+    </Card>
+  </>
+}
