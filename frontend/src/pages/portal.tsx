@@ -20,6 +20,7 @@ export default function PortalPage() {
         { label: "要認証", color: "warning", variant: "dot" },
       ],
       linkUrl: "https://srally.nem.one",
+      requireAuth: true,
     },
     {
       siteName: "さざなみスタンプラリー",
@@ -31,6 +32,7 @@ export default function PortalPage() {
         { label: "要認証", color: "warning", variant: "dot" },
       ],
       linkUrl: "https://srally.nem.one",
+      requireAuth: true,
     },
     {
       siteName: "さざなみスタンプラリー",
@@ -42,6 +44,7 @@ export default function PortalPage() {
         { label: "要認証", color: "warning", variant: "dot" },
       ],
       linkUrl: "https://srally.nem.one",
+      requireAuth: true,
     },
     {
       siteName: "さざなみスタンプラリー",
@@ -53,6 +56,7 @@ export default function PortalPage() {
         { label: "要認証", color: "warning", variant: "dot" },
       ],
       linkUrl: "https://srally.nem.one",
+      requireAuth: true,
     },
     {
       siteName: "さざなみスタンプラリー",
@@ -64,6 +68,7 @@ export default function PortalPage() {
         { label: "要認証", color: "warning", variant: "dot" },
       ],
       linkUrl: "https://srally.nem.one",
+      requireAuth: true,
     }
   ]
 
@@ -152,7 +157,7 @@ export default function PortalPage() {
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center w-full">
         {siteLinks.map((siteLink, index) => (
-          <SiteLinkCard key={index} {...siteLink} />
+          <SiteLinkCard key={index} {...siteLink} onJumpClicked={(url) => handleSiteLinkClick(url, siteLink.requireAuth)} />
         ))}
       </div>
     </div>
