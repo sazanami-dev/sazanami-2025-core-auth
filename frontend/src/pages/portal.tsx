@@ -5,6 +5,8 @@ import SettingsModal, { Settings } from "@/components/portal/settings-modal"
 import useApi from "@/hooks/useApi"
 import { useEffect, useState } from "react"
 import { IResponseSchema } from "@/types/api/i"
+import RequireAuthModal from "@/components/portal/require-auth-modal"
+import useEnv from "@/hooks/useEnv"
 
 export default function PortalPage() {
   const siteLinks: Parameters<typeof SiteLinkCard>[0][] = [
@@ -68,6 +70,9 @@ export default function PortalPage() {
   const [settings, setSettings] = useState<Settings>({ displayName: "" });
   const [isLoggedInState, setIsLoggedInState] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isRequireAuthModalOpen, setIsRequireAuthModalOpen] = useState(false);
+
+  const baseUrl = useEnv('API_BASE_URL', 'http://localhost:3000'); // APIではないけどバックエンドのベースURLと同義なので
 
   // Modal
   useEffect(() => {
@@ -78,6 +83,9 @@ export default function PortalPage() {
   }, []);
 
   async function fetchSettings() {
+    if (!isLoggedInState) {
+      return
+    }
     const api = useApi();
     api.get("/i").then((response) => {
       const data = IResponseSchema.parse(response.data);
@@ -117,6 +125,21 @@ export default function PortalPage() {
     }
   }
 
+  function jumpToPage(url: string) {
+    window.open(url, "_blank");
+  }
+
+  const [authWaitingUrl, setAuthWaitingUrl] = useState<string | null>(null);
+
+  function handleSiteLinkClick(url: string, requireAuth: boolean) {
+    if (requireAuth && !isLoggedInState) {
+      setAuthWaitingUrl(url);
+      setIsRequireAuthModalOpen(true);
+    } else {
+      jumpToPage(url);
+    }
+  }
+
   return <>
     <div className="container mx-auto p-4">
       <header className="flex flex-row justify-between items-center mb-4">
@@ -138,6 +161,21 @@ export default function PortalPage() {
       currentSettings={settings}
       onSave={updateSettings}
       onClose={() => setIsSettingsModalOpen(false)}
+    />
+    <RequireAuthModal
+      isOpen={isRequireAuthModalOpen}
+      onClose={() => {
+        setIsRequireAuthModalOpen(false)
+        setAuthWaitingUrl(null);
+      }}
+      onBeforeAuth={() => {
+        jumpToPage(`${baseUrl}/fe/reauth`);
+      }}
+      onProceedWithoutAuth={() => {
+        if (authWaitingUrl) {
+          jumpToPage(authWaitingUrl);
+        }
+      }}
     />
   </>
 }
