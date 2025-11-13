@@ -27,10 +27,24 @@ const formModalOpen = ref(false);
 const modalMode = ref('create');
 const modalLoading = ref(false);
 const editingRecord = ref(null);
+const bulkModalOpen = ref(false);
+const bulkInput = ref('');
+const bulkStatus = reactive({
+  total: 0,
+  completed: 0,
+  errors: [],
+  running: false,
+});
 
 const pageSize = computed(() => props.config?.pageSize || 20);
 const ready = computed(() => typeof props.apiCall === 'function');
 const isEditMode = computed(() => modalMode.value === 'edit');
+const bulkProgressText = computed(() => {
+  if (!bulkStatus.running || bulkStatus.total === 0) {
+    return '';
+  }
+  return `Processed ${bulkStatus.completed}/${bulkStatus.total}`;
+});
 
 const tableColumns = computed(() => {
   const base = (props.config?.columns || []).map((column) => ({
@@ -272,6 +286,90 @@ async function submitModal() {
 }
 
 const modalTitle = computed(() => (modalMode.value === 'edit' ? `Edit ${props.config.label}` : `Create ${props.config.label}`));
+const bulkModalTitle = computed(() => `Bulk import to ${props.config.label}`);
+
+function resetBulkState() {
+  bulkInput.value = '';
+  bulkStatus.total = 0;
+  bulkStatus.completed = 0;
+  bulkStatus.errors = [];
+  bulkStatus.running = false;
+}
+
+function openBulkModal() {
+  resetBulkState();
+  bulkModalOpen.value = true;
+}
+
+function parseBulkRecords(rawText) {
+  if (!rawText.trim()) {
+    throw new Error('Provide JSON array or newline-delimited JSON objects.');
+  }
+  try {
+    const parsed = JSON.parse(rawText);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    throw new Error('JSON must be an array.');
+  } catch (_error) {
+    const lines = rawText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!lines.length) {
+      throw new Error('Provide JSON array or newline-delimited JSON objects.');
+    }
+    return lines.map((line, idx) => {
+      try {
+        return JSON.parse(line);
+      } catch (error) {
+        throw new Error(`Line ${idx + 1}: ${error.message}`);
+      }
+    });
+  }
+}
+
+async function executeBulkImport() {
+  if (!ready.value) {
+    throw new Error('API client unavailable.');
+  }
+  const records = parseBulkRecords(bulkInput.value);
+  if (!records.length) {
+    throw new Error('No records found.');
+  }
+  bulkStatus.total = records.length;
+  bulkStatus.completed = 0;
+  bulkStatus.errors = [];
+  bulkStatus.running = true;
+  for (const [index, record] of records.entries()) {
+    try {
+      await props.apiCall(props.config.path, {
+        method: 'POST',
+        body: JSON.stringify(record),
+      });
+      bulkStatus.completed += 1;
+    } catch (error) {
+      bulkStatus.errors.push(`Item ${index + 1}: ${error.message}`);
+    }
+  }
+}
+
+async function handleBulkSubmit() {
+  try {
+    await executeBulkImport();
+    if (bulkStatus.errors.length === 0) {
+      emitLog('success', `Bulk imported ${bulkStatus.completed} records to ${props.config.label}.`);
+    } else {
+      emitLog('warn', `Bulk import partially completed (${bulkStatus.completed}/${bulkStatus.total}).`);
+    }
+    await loadRecords(1);
+  } catch (error) {
+    emitLog('error', error.message);
+    bulkStatus.errors.push(error.message);
+  } finally {
+    bulkStatus.running = false;
+  }
+}
 </script>
 
 <template>
@@ -285,6 +383,7 @@ const modalTitle = computed(() => (modalMode.value === 'edit' ? `Edit ${props.co
         <a-space>
           <a-button size="small" @click="loadRecords(page)" :loading="loading">Refresh</a-button>
           <a-button size="small" type="primary" @click="openCreateModal">New</a-button>
+          <a-button size="small" @click="openBulkModal">Bulk import</a-button>
         </a-space>
       </div>
     </div>
@@ -379,6 +478,42 @@ const modalTitle = computed(() => (modalMode.value === 'edit' ? `Edit ${props.co
           </a-col>
         </a-row>
       </a-form>
+    </a-modal>
+
+    <a-modal
+      v-model:open="bulkModalOpen"
+      :title="bulkModalTitle"
+      :confirm-loading="bulkStatus.running"
+      ok-text="Run import"
+      @ok="handleBulkSubmit"
+      @cancel="bulkModalOpen = false"
+    >
+      <a-alert
+        type="info"
+        show-icon
+        message="Paste JSON array or newline-delimited JSON objects. Records will be POSTed sequentially."
+        class="mb"
+      />
+      <a-textarea
+        v-model:value="bulkInput"
+        :auto-size="{ minRows: 8, maxRows: 14 }"
+        placeholder='[{"field":"value"}]'
+        :disabled="bulkStatus.running"
+      />
+      <p v-if="bulkProgressText" class="bulk-progress">{{ bulkProgressText }}</p>
+      <a-alert
+        v-if="bulkStatus.errors.length"
+        type="error"
+        show-icon
+        class="mt"
+        :message="`${bulkStatus.errors.length} errors encountered`"
+      >
+        <template #description>
+          <ul class="bulk-error-list">
+            <li v-for="error in bulkStatus.errors" :key="error">{{ error }}</li>
+          </ul>
+        </template>
+      </a-alert>
     </a-modal>
   </div>
 </template>

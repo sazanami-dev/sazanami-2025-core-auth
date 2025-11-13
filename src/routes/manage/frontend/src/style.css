@@ -242,6 +242,23 @@ body {
   margin-top: 12px;
 }
 
+.mb {
+  margin-bottom: 12px;
+}
+
+.bulk-progress {
+  font-size: 0.85rem;
+  margin-top: 8px;
+  color: #475467;
+}
+
+.bulk-error-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
 @media (max-height: 720px) {
   .form-panel,
   .table-panel {
