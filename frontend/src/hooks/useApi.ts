@@ -9,6 +9,7 @@ const useApi = (token?: string) => {
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
     },
+    withCredentials: true,
   };
   const instance = axios.create(options);
 
