@@ -1,7 +1,7 @@
 "use client";
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
-import { Modal, ModalBody, ModalFooter } from '@heroui/modal';
+import { Modal, ModalBody, ModalContent, ModalFooter } from '@heroui/modal';
 import { useState } from 'react';
 
 export type Settings = {
@@ -21,26 +21,27 @@ export default function SettingsModal(props: SettingsModalProps) {
 
   return <>
     <Modal isOpen={isOpen} onClose={onClose} title="設定">
-      <ModalBody>
-        <Input
-          label="ユーザー名"
-          onChange={(e) => setSettings({ ...settings, displayName: e.target.value })}
-        />
-      </ModalBody>
-      <ModalFooter className="flex justify-end gap-2">
-        <Button
-          variant="flat"
-          onPress={onClose}
-        >キャンセル</Button>
-        <Button
-          variant="solid"
-          onPress={() => {
-            onSave(settings);
-            onClose();
-          }}
-        >保存</Button>
-      </ModalFooter>
-
+      <ModalContent>
+        <ModalBody>
+          <Input
+            label="ユーザー名"
+            onChange={(e) => setSettings({ ...settings, displayName: e.target.value })}
+          />
+        </ModalBody>
+        <ModalFooter className="flex justify-end gap-2">
+          <Button
+            variant="flat"
+            onPress={onClose}
+          >キャンセル</Button>
+          <Button
+            variant="solid"
+            onPress={() => {
+              onSave(settings);
+              onClose();
+            }}
+          >保存</Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   </>
 }
