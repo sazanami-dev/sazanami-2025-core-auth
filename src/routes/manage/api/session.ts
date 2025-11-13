@@ -1,95 +1,106 @@
 import { Router } from "express";
 import prisma from "@/prisma";
+import Logger from "@/logger";
+import { buildPagination, getPaginationParams, sendError, sendJson, sendNoContent } from "./helpers";
 
 const router = Router();
+const logger = new Logger('routes', 'manage', 'session');
 
-router.get("/", (req, res) => {
-  const page = parseInt(String(req.query.page || "1"));
-  const pageSize = parseInt(String(req.query.pageSize || "20"));
-  const skip = (page - 1) * pageSize;
+router.get("/", async (req, res) => {
+  const { page, pageSize, skip } = getPaginationParams(req);
 
-  // WONTFIX: 自作ページネーションやめるべき
-  prisma.session.findMany({
-    orderBy: { createdAt: "desc" },
-    skip: skip,
-    take: pageSize,
-  })
-    .then(async (sessions) => {
-      const totalCount = await prisma.session.count();
-      res.json({
-        data: sessions,
-        pagination: {
-          page,
-          pageSize,
-          totalPages: Math.ceil(totalCount / pageSize),
-          totalCount,
-        },
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to fetch sessions." });
+  try {
+    const [sessions, totalCount] = await Promise.all([
+      prisma.session.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.session.count(),
+    ]);
+
+    return sendJson(res, {
+      data: sessions,
+      pagination: buildPagination(page, pageSize, totalCount),
     });
+  } catch (error) {
+    logger.error(`Failed to fetch sessions: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to fetch sessions.");
+  }
 });
 
-router.delete("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   const sessionId = req.params.id;
-  prisma.session.delete({
-    where: { id: sessionId },
-  })
-    .then(() => {
-      res.status(204).end();
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to delete session." });
-    });
+
+  try {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session) {
+      return sendError(res, 404, "Session not found.");
+    }
+    return sendJson(res, session);
+  } catch (error) {
+    logger.error(`Failed to fetch session ${sessionId}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to fetch session.");
+  }
 });
 
-router.put("/:id", (req, res) => {
+router.post("/", async (req, res) => {
+  const { id, userId } = req.body ?? {};
+
+  try {
+    const newSession = await prisma.session.create({
+      data: {
+        id: id || undefined,
+        userId: userId || null,
+      },
+    });
+    return sendJson(res, newSession, 201);
+  } catch (error) {
+    logger.error(`Failed to create session: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to create session.");
+  }
+});
+
+router.put("/:id", async (req, res) => {
   const sessionId = req.params.id;
-  const { data } = req.body;
-  prisma.session.update({
-    where: { id: sessionId },
-    data: data,
-  })
-    .then((updatedSession) => {
-      res.json(updatedSession);
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to update session." });
+  const { userId } = req.body ?? {};
+  const updateData: Record<string, unknown> = {};
+
+  if (userId !== undefined) {
+    updateData.userId = userId;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return sendError(res, 400, "No update fields provided.");
+  }
+
+  try {
+    const updatedSession = await prisma.session.update({
+      where: { id: sessionId },
+      data: updateData,
     });
+    return sendJson(res, updatedSession);
+  } catch (error) {
+    logger.error(`Failed to update session ${sessionId}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to update session.");
+  }
 });
 
-router.get("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   const sessionId = req.params.id;
-  prisma.session.findUnique({
-    where: { id: sessionId },
-  })
-    .then((session) => {
-      if (session) {
-        res.json(session);
-      } else {
-        res.status(404).json({ error: "Session not found." });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to fetch session." });
-    });
-});
 
-router.post("/", (req, res) => {
-  const { id, userId } = req.body;
-  prisma.session.create({
-    data: {
-      id: id || undefined,
-      userId,
-    },
-  })
-    .then((newSession) => {
-      res.status(201).json(newSession);
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to create session." });
-    });
+  try {
+    const target = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!target) {
+      return sendError(res, 404, "Session not found.");
+    }
+
+    await prisma.session.delete({ where: { id: sessionId } });
+    return sendNoContent(res);
+  } catch (error) {
+    logger.error(`Failed to delete session ${sessionId}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to delete session.");
+  }
 });
 
 export default router;

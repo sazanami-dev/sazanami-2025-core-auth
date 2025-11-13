@@ -1,111 +1,105 @@
 import { Router } from "express";
 import prisma from "@/prisma";
+import Logger from "@/logger";
+import { buildPagination, getPaginationParams, sendError, sendJson, sendNoContent } from "./helpers";
 
 const router = Router();
+const logger = new Logger('routes', 'manage', 'regCode');
 
-router.get("/", (req, res) => {
-  const page = parseInt(String(req.query.page || "1"));
-  const pageSize = parseInt(String(req.query.pageSize || "20"));
-  const skip = (page - 1) * pageSize;
+router.get("/", async (req, res) => {
+  const { page, pageSize, skip } = getPaginationParams(req);
 
-  // WONTFIX: 自作ページネーションやめるべき
-  prisma.registrationCode.findMany({
-    orderBy: { createdAt: "desc" },
-    skip: skip,
-    take: pageSize,
-  })
-    .then(async (codes) => {
-      const totalCount = await prisma.registrationCode.count();
-      res.json({
-        data: codes,
-        pagination: {
-          page,
-          pageSize,
-          totalPages: Math.ceil(totalCount / pageSize),
-          totalCount,
-        },
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to fetch registration codes." });
+  try {
+    const [codes, totalCount] = await Promise.all([
+      prisma.registrationCode.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.registrationCode.count(),
+    ]);
+
+    return sendJson(res, {
+      data: codes,
+      pagination: buildPagination(page, pageSize, totalCount),
     });
+  } catch (error) {
+    logger.error(`Failed to fetch registration codes: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to fetch registration codes.");
+  }
 });
 
-router.get("/:id", (req, res) => {
-  const code = req.params.id
-  prisma.registrationCode.findUnique({
-    where: { code: code },
-  })
-    .then((code) => {
-      if (code) {
-        res.json(code);
-      } else {
-        res.status(404).json({ error: "Registration code not found." });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to fetch registration code." });
-    });
+router.get("/:code", async (req, res) => {
+  const code = req.params.code;
+
+  try {
+    const registrationCode = await prisma.registrationCode.findUnique({ where: { code } });
+    if (!registrationCode) {
+      return sendError(res, 404, "Registration code not found.");
+    }
+    return sendJson(res, registrationCode);
+  } catch (error) {
+    logger.error(`Failed to fetch registration code ${code}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to fetch registration code.");
+  }
 });
 
-router.delete("/:id", (req, res) => {
-  const code = req.params.id;
-  prisma.registrationCode.delete({
-    where: { code: code },
-  })
-    .then(() => {
-      res.status(204).end();
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to delete registration code." });
+router.post("/", async (req, res) => {
+  const { code, userId } = req.body ?? {};
+
+  if (!userId) {
+    return sendError(res, 400, "userId is required.");
+  }
+
+  try {
+    const newCode = await prisma.registrationCode.create({
+      data: {
+        code: code || undefined,
+        userId,
+      },
     });
+    return sendJson(res, newCode, 201);
+  } catch (error) {
+    logger.error(`Failed to create registration code: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to create registration code.");
+  }
 });
 
-router.post("/", (req, res) => {
-  const { code, userId } = req.body;
-  prisma.registrationCode.create({
-    data: {
-      code: code || undefined,
-      userId: userId,
-    },
-  })
-    .then((newCode) => {
-      res.status(201).json(newCode);
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to create registration code." });
+router.put("/:code", async (req, res) => {
+  const code = req.params.code;
+  const { userId } = req.body ?? {};
+
+  if (!userId) {
+    return sendError(res, 400, "userId is required.");
+  }
+
+  try {
+    const updatedCode = await prisma.registrationCode.update({
+      where: { code },
+      data: { userId },
     });
+    return sendJson(res, updatedCode);
+  } catch (error) {
+    logger.error(`Failed to update registration code ${code}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to update registration code.");
+  }
 });
 
-router.put("/:id", (req, res) => {
-  const code = req.params.id;
-  const { userId } = req.body;
-  prisma.registrationCode.update({
-    where: { code: code },
-    data: { userId: userId },
-  })
-    .then((updatedCode) => {
-      res.json(updatedCode);
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to update registration code." });
-    });
-});
+router.delete("/:code", async (req, res) => {
+  const code = req.params.code;
 
-router.post("/", (req, res) => {
-  const { code, userId } = req.body;
-  prisma.registrationCode.create({
-    data: {
-      code: code || undefined,
-      userId: userId,
-    },
-  })
-    .then((newCode) => {
-      res.status(201).json(newCode);
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to create registration code." });
-    });
+  try {
+    const target = await prisma.registrationCode.findUnique({ where: { code } });
+    if (!target) {
+      return sendError(res, 404, "Registration code not found.");
+    }
+
+    await prisma.registrationCode.delete({ where: { code } });
+    return sendNoContent(res);
+  } catch (error) {
+    logger.error(`Failed to delete registration code ${code}: ${(error as Error).message}`);
+    return sendError(res, 500, "Failed to delete registration code.");
+  }
 });
 
 export default router;
