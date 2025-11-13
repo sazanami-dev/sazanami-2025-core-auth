@@ -96,7 +96,7 @@ export default function PortalPage() {
     <div className="container mx-auto p-4">
       <header className="flex flex-row justify-between items-center mb-4">
         <h1 className="text-2xl">ポータル</h1>
-        <Button isIconOnly variant="bordered" size="md">
+        <Button isIconOnly variant="bordered" size="md" onPress={() => setIsSettingsModalOpen(true)}>
           <PiGearDuotone className="text-xl" />
         </Button>
       </header>
@@ -106,13 +106,6 @@ export default function PortalPage() {
         ))}
       </div>
     </div>
-
-    {/* <SettingsModal */}
-    {/*   isOpen={isSettingsModalOpen} */}
-    {/*   currentSettings={settings} */}
-    {/*   onSave={(newSettings) => setSettings(newSettings)} */}
-    {/*   onClose={() => setIsSettingsModalOpen(false)} */}
-    {/* /> */}
     <SettingsModal
       isOpen={isSettingsModalOpen}
       currentSettings={settings}
