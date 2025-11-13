@@ -23,7 +23,7 @@ export default function SiteLinkCard(props: SiteLinkCardProps) {
   const { siteName, siteUrl, siteIconUrl, siteDescription, siteTags, linkUrl } = props;
 
   return <>
-    <Card className="max-w-[400px]">
+    <Card className="max-w-[500px] w-full">
       <CardHeader className="flex gap-3">
         {siteIconUrl &&
           <Image
