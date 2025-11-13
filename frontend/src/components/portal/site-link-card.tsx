@@ -17,10 +17,12 @@ type SiteLinkCardProps = {
     variant: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow" | "dot";
   }[];
   linkUrl: string;
+  requireAuth: boolean;
+  onJumpClicked?: (linkUrl: string) => void;
 }
 
 export default function SiteLinkCard(props: SiteLinkCardProps) {
-  const { siteName, siteUrl, siteIconUrl, siteDescription, siteTags, linkUrl } = props;
+  const { siteName, siteUrl, siteIconUrl, siteDescription, siteTags, linkUrl, onJumpClicked } = props;
 
   return <>
     <Card className="max-w-[500px] w-full">
@@ -39,11 +41,9 @@ export default function SiteLinkCard(props: SiteLinkCardProps) {
           <p className="text-small text-default-500">{siteUrl}</p>
         </div>
         <div className="ml-auto flex items-center">
-          <Link href={linkUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="bordered" size="md" isIconOnly>
-              <PiArrowSquareOutDuotone className="text-lg"/>
-            </Button>
-          </Link>
+          <Button variant="bordered" size="md" isIconOnly onPress={() => onJumpClicked(linkUrl)}>
+            <PiArrowSquareOutDuotone className="text-lg" />
+          </Button>
         </div>
       </CardHeader>
       <Divider />
