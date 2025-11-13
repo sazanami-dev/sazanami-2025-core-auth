@@ -1,7 +1,7 @@
 "use client";
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
-import { Modal, ModalBody, ModalContent, ModalFooter } from '@heroui/modal';
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/modal';
 import { useState } from 'react';
 
 export type Settings = {
@@ -22,6 +22,8 @@ export default function SettingsModal(props: SettingsModalProps) {
   return <>
     <Modal isOpen={isOpen} onClose={onClose} title="設定">
       <ModalContent>
+        <ModalHeader>
+        </ModalHeader>
         <ModalBody>
           <Input
             label="ユーザー名"
