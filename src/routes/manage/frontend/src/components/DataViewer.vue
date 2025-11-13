@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
-import dayjs from 'dayjs';
+import { PAGE_SIZE } from '../models.js';
 import { formatBoolean, formatDateTime } from '../utils/format.js';
 
 const props = defineProps({
@@ -22,90 +22,101 @@ const page = ref(1);
 const totalPages = ref(1);
 const totalCount = ref(0);
 const message = ref('');
-const formState = reactive({});
-const formModalOpen = ref(false);
-const modalMode = ref('create');
-const modalLoading = ref(false);
-const editingRecord = ref(null);
-
-const pageSize = computed(() => props.config?.pageSize || 20);
+const selectedId = ref(null);
+const formData = reactive({});
+const pageSize = computed(() => props.config.pageSize || PAGE_SIZE);
 const ready = computed(() => typeof props.apiCall === 'function');
-const modalTitle = computed(() => (modalMode.value === 'edit' ? `Edit ${props.config.label}` : `Create ${props.config.label}`));
-
-const tableColumns = computed(() => {
-  const base = (props.config?.columns || []).map((column) => ({
-    title: column.label,
-    dataIndex: column.key,
-    key: column.key,
-  }));
-  base.push({
-    title: 'Actions',
-    key: '__actions',
-    dataIndex: '__actions',
-    width: 140,
-    align: 'right',
-  });
-  return base;
-});
 
 function emitLog(level, text) {
-  emit('log', { level, message: text });
+  emit('log', {
+    level,
+    message: text,
+  });
 }
 
 function initForm() {
-  (props.config?.fields || []).forEach((field) => {
+  props.config.fields.forEach((field) => {
     if (field.type === 'checkbox') {
-      formState[field.key] = false;
-    } else if (field.type === 'datetime') {
-      formState[field.key] = null;
+      formData[field.key] = false;
     } else {
-      formState[field.key] = '';
+      formData[field.key] = '';
     }
   });
+}
+
+function toLocalInput(value) {
+  if (!value) {
+    return '';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+}
+
+function fromLocalInput(value) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toISOString();
 }
 
 function populateForm(record) {
-  (props.config?.fields || []).forEach((field) => {
+  props.config.fields.forEach((field) => {
     const value = record ? record[field.key] : null;
     if (field.type === 'checkbox') {
-      formState[field.key] = Boolean(value);
+      formData[field.key] = Boolean(value);
     } else if (field.type === 'datetime') {
-      const parsed = value ? dayjs(value) : null;
-      formState[field.key] = parsed && parsed.isValid() ? parsed : null;
+      formData[field.key] = value ? toLocalInput(value) : '';
     } else {
-      formState[field.key] = value ?? '';
+      formData[field.key] = value ?? '';
     }
   });
 }
 
-function formattedCell(column, record) {
-  const raw = record?.[column.key];
-  const format = column.format || column.type;
-  switch (format) {
-    case 'boolean':
-      return formatBoolean(raw);
-    case 'datetime':
-      return formatDateTime(raw);
-    default:
-      return raw ?? '';
-  }
+function resetDetail(record = null) {
+  selectedId.value = record ? record[props.config.primaryKey] ?? null : null;
+  populateForm(record);
 }
 
 function getEndpoint(id) {
-  const base = props.config.path || '';
   if (!id) {
-    return base;
+    return props.config.path;
   }
-  return `${base}/${encodeURIComponent(id)}`;
+  return `${props.config.path}/${encodeURIComponent(id)}`;
+}
+
+function formatCell(column, record) {
+  const value = record?.[column.key];
+  if (column.formatter) {
+    try {
+      return column.formatter(value, record);
+    } catch (_error) {
+      return value;
+    }
+  }
+  if (column.key.toLowerCase().includes('date')) {
+    return formatDateTime(value);
+  }
+  if (typeof value === 'boolean') {
+    return formatBoolean(value);
+  }
+  return value ?? '';
 }
 
 async function loadRecords(targetPage = 1) {
   if (!ready.value) {
-    message.value = 'API client not configured.';
+    message.value = 'API client is not configured.';
     return;
   }
   loading.value = true;
-  message.value = '';
+  message.value = 'Loading records...';
   try {
     const params = new URLSearchParams({
       page: String(Math.max(1, targetPage)),
@@ -122,10 +133,19 @@ async function loadRecords(targetPage = 1) {
     const count = Number(pagination.totalCount);
     totalCount.value = Number.isFinite(count) ? count : data.length;
 
-    if (data.length === 0) {
-      message.value = 'No records.';
+    if (selectedId.value) {
+      const next = data.find((row) => row[props.config.primaryKey] === selectedId.value);
+      if (next) {
+        resetDetail(next);
+      } else {
+        resetDetail(null);
+      }
     }
-    emitLog('success', `Loaded ${data.length} rows from ${props.config.label}.`);
+    if (!selectedId.value && data.length > 0) {
+      resetDetail(data[0]);
+    }
+    message.value = data.length === 0 ? 'No records yet.' : '';
+    emitLog('success', `Loaded ${data.length} ${props.config.label.toLowerCase()}`);
   } catch (error) {
     rows.value = [];
     message.value = error.message;
@@ -137,12 +157,12 @@ async function loadRecords(targetPage = 1) {
 
 function buildPayload() {
   const payload = {};
-  (props.config?.fields || []).forEach((field) => {
-    const value = formState[field.key];
+  props.config.fields.forEach((field) => {
+    const value = formData[field.key];
     if (field.type === 'checkbox') {
       payload[field.key] = Boolean(value);
     } else if (field.type === 'datetime') {
-      payload[field.key] = value && dayjs(value).isValid() ? dayjs(value).toISOString() : null;
+      payload[field.key] = value ? fromLocalInput(value) : null;
     } else if (value === '') {
       payload[field.key] = null;
     } else {
@@ -153,17 +173,17 @@ function buildPayload() {
 }
 
 function primaryKeyValue() {
-  if (editingRecord.value) {
-    return editingRecord.value[props.config.primaryKey];
+  if (selectedId.value) {
+    return selectedId.value;
   }
-  const candidate = formState[props.config.primaryKey];
+  const candidate = formData[props.config.primaryKey];
   return candidate || null;
 }
 
 async function handleUpdate() {
   const id = primaryKeyValue();
   if (!id) {
-    emitLog('warn', 'Nothing selected.');
+    emitLog('warn', 'Nothing selected for update.');
     return;
   }
   loading.value = true;
@@ -197,17 +217,19 @@ async function handleCreate() {
   }
 }
 
-async function handleDelete(record) {
-  const target = record || editingRecord.value;
-  if (!target) {
-    emitLog('warn', 'Select a record to delete.');
+async function handleDelete() {
+  if (!selectedId.value) {
+    emitLog('warn', 'Select a record before deleting.');
     return;
   }
-  const id = target[props.config.primaryKey];
   loading.value = true;
+  const id = selectedId.value;
   try {
-    await props.apiCall(getEndpoint(id), { method: 'DELETE' });
+    await props.apiCall(getEndpoint(id), {
+      method: 'DELETE',
+    });
     emitLog('success', `${props.config.label} deleted (${id}).`);
+    resetDetail(null);
     await loadRecords(page.value);
   } catch (error) {
     emitLog('error', error.message);
@@ -217,19 +239,20 @@ async function handleDelete(record) {
 }
 
 function fieldDisabled(field) {
-  if (field.readOnly && !(props.config.allowManualPrimaryKey && field.key === props.config.primaryKey && modalMode.value === 'create')) {
+  if (field.readOnly && !(props.config.allowManualPrimaryKey && field.key === props.config.primaryKey)) {
     return true;
   }
   if (field.key === props.config.primaryKey && props.config.allowManualPrimaryKey) {
-    return modalMode.value === 'edit';
+    return loading.value || Boolean(selectedId.value);
   }
-  return modalLoading.value;
+  return loading.value;
 }
 
 watch(
   () => props.config,
   () => {
     initForm();
+    resetDetail(null);
     if (ready.value) {
       loadRecords(1);
     }
@@ -243,142 +266,89 @@ watch(ready, (isReady) => {
   }
 });
 
-function openCreateModal() {
-  modalMode.value = 'create';
-  editingRecord.value = null;
-  populateForm(null);
-  formModalOpen.value = true;
-}
-
-function openEditModal(record) {
-  if (!record) {
-    emitLog('warn', 'Record not found.');
-    return;
-  }
-  modalMode.value = 'edit';
-  editingRecord.value = record;
-  populateForm(record);
-  formModalOpen.value = true;
-}
-
-async function submitModal() {
-  modalLoading.value = true;
-  try {
-    if (modalMode.value === 'edit') {
-      await handleUpdate();
-    } else {
-      await handleCreate();
-    }
-    formModalOpen.value = false;
-  } finally {
-    modalLoading.value = false;
-  }
-}
-
-const tableRowKey = (row) => row?.[props.config.primaryKey] ?? JSON.stringify(row || {});
+const pageLabel = computed(() => `Page ${page.value} / ${totalPages.value}` + (Number.isFinite(totalCount.value) ? ` (${totalCount.value})` : ''));
 </script>
 
 <template>
-  <div class="viewer">
-    <div class="viewer-header">
+  <div class="viewer-card">
+    <header class="viewer-header">
       <div>
         <h3>{{ config.label }}</h3>
         <p>{{ config.description }}</p>
       </div>
-      <div class="viewer-controls">
-        <a-button size="small" @click="loadRecords(page)" :loading="loading">Refresh</a-button>
-        <a-button size="small" type="primary" @click="openCreateModal">New</a-button>
-      </div>
-    </div>
-
-    <div class="viewer-body single">
-      <div class="panel table-panel">
-        <div class="table-scroll data-table-scroll">
-          <a-table
-            :columns="tableColumns"
-            :data-source="rows"
-            :loading="loading"
-            :pagination="false"
-            size="small"
-            :row-key="tableRowKey"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === '__actions'">
-                <a-space size="small">
-                  <a-button type="link" size="small" @click="openEditModal(record)">Edit</a-button>
-                  <a-popconfirm
-                    title="Delete this record?"
-                    ok-text="Delete"
-                    ok-type="danger"
-                    @confirm="() => handleDelete(record)"
-                  >
-                    <a-button type="link" size="small" danger>Delete</a-button>
-                  </a-popconfirm>
-                </a-space>
-              </template>
-              <template v-else>
-                <span>{{ formattedCell(column, record) }}</span>
-              </template>
-            </template>
-          </a-table>
+      <div class="viewer-actions">
+        <button type="button" @click="loadRecords(page)" :disabled="loading || !ready">Refresh</button>
+        <div class="pager">
+          <button type="button" @click="loadRecords(page - 1)" :disabled="loading || page <= 1">Prev</button>
+          <span>{{ pageLabel }}</span>
+          <button type="button" @click="loadRecords(page + 1)" :disabled="loading || page >= totalPages">Next</button>
         </div>
-        <span v-if="message" class="viewer-message">{{ message }}</span>
-        <a-pagination
-          size="small"
-          :current="page"
-          :total="totalCount || rows.length"
-          :page-size="pageSize"
-          :show-size-changer="false"
-          class="mt"
-          @change="loadRecords"
-        />
       </div>
-    </div>
+    </header>
 
-    <a-modal
-      v-model:open="formModalOpen"
-      :title="modalTitle"
-      :confirm-loading="modalLoading"
-      @ok="submitModal"
-      @cancel="formModalOpen = false"
-    >
-      <a-form layout="vertical">
-        <a-row :gutter="[12, 12]">
-          <a-col
-            v-for="field in config.fields"
-            :key="field.key"
-            :xs="24"
-            :sm="12"
-          >
-            <a-form-item :label="field.label">
-              <template v-if="field.type === 'checkbox'">
-                <a-switch v-model:checked="formState[field.key]" :disabled="fieldDisabled(field)" />
-              </template>
-              <template v-else-if="field.type === 'textarea'">
-                <a-textarea
-                  v-model:value="formState[field.key]"
-                  :auto-size="{ minRows: 2, maxRows: 6 }"
-                  :disabled="fieldDisabled(field)"
-                />
-              </template>
-              <template v-else-if="field.type === 'datetime'">
-                <a-date-picker
-                  show-time
-                  style="width: 100%"
-                  v-model:value="formState[field.key]"
-                  :disabled="fieldDisabled(field)"
-                />
-              </template>
-              <template v-else>
-                <a-input
-                  v-model:value="formState[field.key]"
-                  :disabled="fieldDisabled(field)"
-                />
-              </template>
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-modal>
+    <div class="viewer-body">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="column in config.columns" :key="column.key">
+                {{ column.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="row[config.primaryKey] ?? JSON.stringify(row)"
+              :class="{ selected: selectedId === (row[config.primaryKey] ?? null) }"
+              @click="resetDetail(row)"
+            >
+              <td v-for="column in config.columns" :key="column.key">
+                {{ formatCell(column, row) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="message" class="viewer-message">{{ message }}</p>
+      </div>
+
+      <form class="detail-form" @submit.prevent="handleUpdate">
+        <h4>Detail</h4>
+        <div class="fields">
+          <label v-for="field in config.fields" :key="field.key">
+            <span>{{ field.label }}</span>
+            <textarea
+              v-if="field.type === 'textarea'"
+              v-model="formData[field.key]"
+              :disabled="fieldDisabled(field)"
+            />
+            <input
+              v-else-if="field.type === 'checkbox'"
+              type="checkbox"
+              v-model="formData[field.key]"
+              :disabled="fieldDisabled(field)"
+            />
+            <input
+              v-else-if="field.type === 'datetime'"
+              type="datetime-local"
+              v-model="formData[field.key]"
+              :disabled="fieldDisabled(field)"
+            />
+            <input
+              v-else
+              type="text"
+              v-model="formData[field.key]"
+              :disabled="fieldDisabled(field)"
+            />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" :disabled="loading || !selectedId">Update</button>
+          <button type="button" @click="handleCreate" :disabled="loading">Create</button>
+          <button type="button" @click="handleDelete" :disabled="loading || !selectedId">Delete</button>
+          <button type="button" @click="resetDetail(null)" :disabled="loading">Clear</button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
