@@ -10,6 +10,11 @@ router.use("/api", apiRouter);
 
 // Provide ./public as static files
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 router.use(express.static(path.join(__dirname, "public")));
+
+router.get("/{*any}", (_req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 export default router;
