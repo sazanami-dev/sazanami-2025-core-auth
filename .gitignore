@@ -10,8 +10,6 @@ dist
 # FE Built files
 /public/fe
 
-/src/routes/manage/public
-
 # Logs
 frontend/logs
 frontend/*.log
