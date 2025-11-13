@@ -7,6 +7,7 @@ import verifyRoute from "./verify";
 import manageRoute from "./manage";
 import redirectRoute from "./redirect";
 import registerRoute from "./register";
+import checkRoute from "./check";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/verify', verifyRoute);
 router.use('/manage', manageRoute);
 router.use('/redirect', redirectRoute);
 router.use('/register', registerRoute);
+router.use('/check', checkRoute);
 
 export default router;
