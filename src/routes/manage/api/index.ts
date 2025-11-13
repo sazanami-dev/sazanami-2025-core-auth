@@ -6,6 +6,7 @@ import userRouter from "./user";
 import regCodeRouter from "./regCode";
 import sessionRouter from "./session";
 import pendingRedirectRouter from "./pending-redirect";
+import schemaRouter from "./schema";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/user", userRouter);
 router.use("/regCode", regCodeRouter);
 router.use("/session", sessionRouter);
 router.use("/pending-redirect", pendingRedirectRouter);
+router.use("/schema", schemaRouter);
 
 export default router;
