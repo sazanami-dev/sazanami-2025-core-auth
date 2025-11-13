@@ -4,7 +4,7 @@ import { Image } from "@heroui/image";
 import { Link } from "@heroui/link";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
-import { PiArrowSquareOutDuotone, PiLinkSimpleDuotone } from "react-icons/pi";
+import { PiArrowSquareOutDuotone } from "react-icons/pi";
 
 type SiteLinkCardProps = {
   siteName: string;
