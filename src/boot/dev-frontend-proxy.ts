@@ -11,7 +11,7 @@ export const devFrontendProxy = (app: any) => {
   }
 
   const clientOrigin = EnvUtil.get(EnvKey.CLIENT_ORIGIN) || 'http://localhost:3000';
-  logger.info(`Setting up frontend proxy to ${clientOrigin}/fe`, 'proxy');
+  logger.info(`Setting up frontend proxy to ${clientOrigin}/fe`);
   app.use(
     '/fe',
     createProxyMiddleware({
