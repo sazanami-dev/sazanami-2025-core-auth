@@ -1,9 +1,8 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import DataViewer from './components/DataViewer.vue';
 import EventLog from './components/EventLog.vue';
 import { createApiClient } from './utils/api.js';
-import { modelConfigs } from './models.js';
 
 const STORAGE_KEY = 'adminApiKey';
 const STORAGE_BASE = 'adminApiBaseUrl';
@@ -13,6 +12,10 @@ const savedBase = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_B
 
 const apiKey = ref(savedKey || '');
 const apiBaseUrl = ref(savedBase || (typeof window !== 'undefined' ? window.location.origin : ''));
+const activeTab = ref('overview');
+const logs = ref([]);
+const settingsModalOpen = ref(false);
+const consoleDrawerOpen = ref(false);
 
 const settingsForm = reactive({
   apiKey: apiKey.value,
@@ -21,23 +24,16 @@ const settingsForm = reactive({
 
 const authStatus = reactive({
   label: 'Unknown',
-  tone: 'neutral',
-  details: 'Not checked yet.',
+  tone: 'default',
+  detail: 'Not checked yet',
 });
 
-const tabs = [
-  { id: 'overview', label: 'Overview', type: 'overview' },
-  ...modelConfigs.map((config) => ({
-    id: config.key,
-    label: config.label,
-    type: 'viewer',
-    config,
-  })),
-  { id: 'events', label: 'Events', type: 'events' },
-];
-
-const activeTab = ref(tabs[0].id);
-const logs = ref([]);
+const schemaState = reactive({
+  models: [],
+  loading: false,
+  error: '',
+  updatedAt: '',
+});
 
 const isConfigured = computed(() => Boolean(apiKey.value && apiBaseUrl.value));
 const apiClient = computed(() => {
@@ -54,6 +50,29 @@ const apiClient = computed(() => {
   }
 });
 
+const viewerModels = computed(() => schemaState.models || []);
+const tabItems = computed(() => [
+  { id: 'overview', label: 'Overview', type: 'overview' },
+  ...viewerModels.value.map((model) => ({ id: model.key, label: model.label, type: 'viewer' })),
+  { id: 'events', label: 'Events', type: 'events' },
+]);
+const activeModel = computed(() => viewerModels.value.find((model) => model.key === activeTab.value) || null);
+const isOverviewTab = computed(() => activeTab.value === 'overview');
+const isEventsTab = computed(() => activeTab.value === 'events');
+
+watch(tabItems, (items) => {
+  if (!items.some((item) => item.id === activeTab.value)) {
+    activeTab.value = 'overview';
+  }
+});
+
+watch(settingsModalOpen, (open) => {
+  if (open) {
+    settingsForm.apiKey = apiKey.value;
+    settingsForm.apiBaseUrl = apiBaseUrl.value;
+  }
+});
+
 function pushLog(level, message) {
   const entry = {
     id: `${Date.now()}-${Math.random()}`,
@@ -61,7 +80,7 @@ function pushLog(level, message) {
     message,
     time: new Date().toLocaleTimeString('ja-JP'),
   };
-  logs.value = [entry, ...logs.value].slice(0, 60);
+  logs.value = [entry, ...logs.value].slice(0, 80);
 }
 
 function handleChildLog(entry) {
@@ -83,135 +102,186 @@ function saveSettings() {
   apiBaseUrl.value = settingsForm.apiBaseUrl.trim().replace(/\/$/, '');
   persistSettings();
   pushLog('info', 'API settings saved.');
+  settingsModalOpen.value = false;
   verifyKey();
+  loadSchema();
 }
 
 async function verifyKey() {
   if (!apiClient.value) {
     authStatus.label = 'Missing config';
-    authStatus.tone = 'warn';
-    authStatus.details = 'Set API key / Base URL';
+    authStatus.tone = 'warning';
+    authStatus.detail = 'Set API key / Base URL';
     return;
   }
   authStatus.label = 'Checking...';
-  authStatus.tone = 'loading';
-  authStatus.details = 'Contacting API';
+  authStatus.tone = 'processing';
+  authStatus.detail = 'Contacting API';
   try {
     const response = await apiClient.value('/manage/api/checkKey', { method: 'GET' });
     if (response?.valid) {
       authStatus.label = 'Verified';
-      authStatus.tone = 'ok';
-      authStatus.details = `Checked at ${new Date().toLocaleTimeString('ja-JP')}`;
+      authStatus.tone = 'success';
+      authStatus.detail = `Checked at ${new Date().toLocaleTimeString('ja-JP')}`;
       pushLog('success', 'API key verified.');
     } else {
       authStatus.label = 'Invalid';
       authStatus.tone = 'error';
-      authStatus.details = 'API rejected the key';
+      authStatus.detail = 'API rejected the key';
       pushLog('error', 'API key rejected.');
     }
   } catch (error) {
     authStatus.label = 'Error';
     authStatus.tone = 'error';
-    authStatus.details = error.message;
+    authStatus.detail = error.message;
     pushLog('error', error.message);
+  }
+}
+
+async function loadSchema() {
+  if (!apiClient.value) {
+    schemaState.models = [];
+    schemaState.error = '';
+    return;
+  }
+  schemaState.loading = true;
+  schemaState.error = '';
+  try {
+    const response = await apiClient.value('/manage/api/schema', { method: 'GET' });
+    schemaState.models = Array.isArray(response?.models) ? response.models : [];
+    schemaState.updatedAt = response?.updatedAt || '';
+    pushLog('success', `Loaded ${schemaState.models.length} model definitions.`);
+  } catch (error) {
+    schemaState.models = [];
+    schemaState.error = error.message;
+    pushLog('error', `Failed to load schema: ${error.message}`);
+  } finally {
+    schemaState.loading = false;
   }
 }
 
 onMounted(() => {
   if (isConfigured.value) {
     verifyKey();
+    loadSchema();
   }
 });
 
-const viewerTabs = tabs.filter((tab) => tab.type === 'viewer');
+watch(
+  () => apiClient.value,
+  (client) => {
+    if (client) {
+      loadSchema();
+    }
+  },
+);
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="app-root">
     <header class="app-header">
-      <div>
+      <div class="brand-block">
         <h1>Management Console</h1>
-        <p>Simple admin surface powered by the manage API</p>
+        <p>Operate users, sessions, and redirect data via the manage API.</p>
       </div>
-      <div class="status" :class="authStatus.tone">
-        <strong>{{ authStatus.label }}</strong>
-        <small>{{ authStatus.details }}</small>
+      <div class="header-actions">
+        <a-tag :color="authStatus.tone">{{ authStatus.label }}</a-tag>
+        <span class="status-text">{{ authStatus.detail }}</span>
+        <a-button size="small" @click="consoleDrawerOpen = true">Console</a-button>
+        <a-button type="primary" size="small" @click="settingsModalOpen = true">Settings</a-button>
       </div>
     </header>
 
-    <section class="settings-card">
-      <form @submit.prevent="saveSettings" class="settings-form">
-        <label>
-          <span>API Base URL</span>
-          <input v-model="settingsForm.apiBaseUrl" type="text" placeholder="https://example.com" />
-        </label>
-        <label>
-          <span>Manage API Key</span>
-          <input v-model="settingsForm.apiKey" type="password" placeholder="••••••" />
-        </label>
-        <div class="settings-actions">
-          <button type="submit">Save</button>
-          <button type="button" @click="verifyKey">Recheck</button>
-        </div>
-      </form>
-    </section>
-
-    <nav class="tab-bar">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        :class="{ active: activeTab === tab.id }"
-        type="button"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-      </button>
-    </nav>
-
-    <div class="content-grid">
-      <section class="tab-area">
-        <div v-if="activeTab === 'overview'" class="card">
-          <h2>Overview</h2>
-          <p>Use the tabs to inspect and mutate data models. The console reads whatever the API returns, so schema tweaks rarely require frontend changes.</p>
-          <ul>
-            <li>Save an API key + Base URL to unlock data viewers.</li>
-            <li>Each viewer lists 20 records per page with CRUD actions.</li>
-            <li>The event log shows the freshest audit entries.</li>
-          </ul>
-        </div>
-
-        <DataViewer
-          v-for="tab in viewerTabs"
-          v-show="activeTab === tab.id"
+    <main class="app-main">
+      <nav class="tab-bar">
+        <button
+          v-for="tab in tabItems"
           :key="tab.id"
-          :config="tab.config"
-          :api-call="apiClient"
-          @log="handleChildLog"
-        />
+          class="tab-button"
+          :class="{ active: activeTab === tab.id }"
+          type="button"
+          @click="activeTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
 
-        <EventLog
-          v-show="activeTab === 'events'"
-          :api-call="apiClient"
-          @log="handleChildLog"
-        />
-      </section>
-
-      <aside class="log-panel card">
-        <div class="log-header">
-          <h3>Console</h3>
-          <small>latest {{ logs.length }} entries</small>
-        </div>
-        <div class="log-body">
-          <p v-if="logs.length === 0" class="muted">No log entries yet.</p>
+      <section class="tab-surface">
+        <div v-if="isOverviewTab" class="overview-panel">
+          <h2>Overview</h2>
+          <p>Schema powered front-end. Add/modify viewers by updating the server-side schema response.</p>
           <ul>
-            <li v-for="entry in logs" :key="entry.id" :class="entry.level">
-              <span>{{ entry.time }}</span>
-              <strong>{{ entry.level }}</strong>
-              <span>{{ entry.message }}</span>
-            </li>
+            <li>Use the header menu to open API settings.</li>
+            <li>Each viewer lists paged records with inline CRUD.</li>
+            <li>Console output lives in the toggleable drawer.</li>
           </ul>
+          <a-alert
+            v-if="schemaState.updatedAt"
+            type="info"
+            show-icon
+            :message="`Schema refreshed at ${schemaState.updatedAt}`"
+          />
+          <a-alert
+            v-if="schemaState.error"
+            type="error"
+            show-icon
+            :message="schemaState.error"
+            class="mt"
+          />
         </div>
-      </aside>
-    </div>
+
+        <template v-else-if="activeModel">
+          <KeepAlive>
+            <DataViewer
+              :key="activeModel.key"
+              :config="activeModel"
+              :api-call="apiClient"
+              @log="handleChildLog"
+            />
+          </KeepAlive>
+        </template>
+
+        <EventLog v-else-if="isEventsTab" :api-call="apiClient" @log="handleChildLog" />
+      </section>
+    </main>
+
+    <a-modal
+      v-model:open="settingsModalOpen"
+      title="API Connection"
+      ok-text="Save"
+      @ok="saveSettings"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="API Base URL">
+          <a-input v-model:value="settingsForm.apiBaseUrl" placeholder="https://example.com" />
+        </a-form-item>
+        <a-form-item label="Manage API Key">
+          <a-input-password v-model:value="settingsForm.apiKey" placeholder="••••••••" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <a-drawer
+      v-model:open="consoleDrawerOpen"
+      title="Console"
+      placement="right"
+      width="360"
+    >
+      <a-list
+        :data-source="logs"
+        size="small"
+        :locale="{ emptyText: 'No log entries yet.' }"
+      >
+        <template #renderItem="{ item }">
+          <a-list-item>
+            <div class="log-entry" :class="item.level">
+              <span class="log-time">{{ item.time }}</span>
+              <span class="log-level">{{ item.level }}</span>
+              <span class="log-message">{{ item.message }}</span>
+            </div>
+          </a-list-item>
+        </template>
+      </a-list>
+    </a-drawer>
   </div>
 </template>
