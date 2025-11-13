@@ -38,3 +38,4 @@ frontend/pnpm-lock.yaml
 frontend/yarn.lock
 frontend/package-lock.json
 frontend/bun.lockb
+src/routes/manage/public
