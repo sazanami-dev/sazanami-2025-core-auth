@@ -4,7 +4,7 @@ import { Image } from "@heroui/image";
 import { Link } from "@heroui/link";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
-import { PiLinkSimpleDuotone } from "react-icons/pi";
+import { PiArrowSquareOutDuotone, PiLinkSimpleDuotone } from "react-icons/pi";
 
 type SiteLinkCardProps = {
   siteName: string;
@@ -41,7 +41,7 @@ export default function SiteLinkCard(props: SiteLinkCardProps) {
         <div className="ml-auto flex items-center">
           <Link href={linkUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="bordered" size="md" isIconOnly>
-              <PiLinkSimpleDuotone />
+              <PiArrowSquareOutDuotone className="text-lg"/>
             </Button>
           </Link>
         </div>
