@@ -23,52 +23,16 @@ export default function PortalPage() {
       requireAuth: true,
     },
     {
-      siteName: "さざなみスタンプラリー",
-      siteUrl: "srally.nem.one",
+      siteName: "学園祭オンラインパンフレット",
+      siteUrl: "fes.sazanami.dev",
       siteIconUrl: "https://github.com/r-ca.png",
-      siteDescription: "すたんぷらりー",
+      siteDescription: "",
       siteTags: [
         { label: "さざなみ開発", color: "primary", variant: "bordered" },
-        { label: "要認証", color: "warning", variant: "dot" },
+        { label: "認証不要", color: "primary", variant: "bordered" },
       ],
-      linkUrl: "https://srally.nem.one",
-      requireAuth: true,
-    },
-    {
-      siteName: "さざなみスタンプラリー",
-      siteUrl: "srally.nem.one",
-      siteIconUrl: "https://github.com/r-ca.png",
-      siteDescription: "すたんぷらりー",
-      siteTags: [
-        { label: "さざなみ開発", color: "primary", variant: "bordered" },
-        { label: "要認証", color: "warning", variant: "dot" },
-      ],
-      linkUrl: "https://srally.nem.one",
-      requireAuth: true,
-    },
-    {
-      siteName: "さざなみスタンプラリー",
-      siteUrl: "srally.nem.one",
-      siteIconUrl: "https://github.com/r-ca.png",
-      siteDescription: "すたんぷらりー",
-      siteTags: [
-        { label: "さざなみ開発", color: "primary", variant: "bordered" },
-        { label: "要認証", color: "warning", variant: "dot" },
-      ],
-      linkUrl: "https://srally.nem.one",
-      requireAuth: true,
-    },
-    {
-      siteName: "さざなみスタンプラリー",
-      siteUrl: "srally.nem.one",
-      siteIconUrl: "https://github.com/r-ca.png",
-      siteDescription: "すたんぷらりー",
-      siteTags: [
-        { label: "さざなみ開発", color: "primary", variant: "bordered" },
-        { label: "要認証", color: "warning", variant: "dot" },
-      ],
-      linkUrl: "https://srally.nem.one",
-      requireAuth: true,
+      linkUrl: "https://fes.sazanami.dev",
+      requireAuth: false,
     }
   ]
 
