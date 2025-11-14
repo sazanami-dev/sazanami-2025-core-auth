@@ -73,7 +73,7 @@ describe('Session Service', () => {
 
       const result = await createAnonymousSession();
 
-      expect(prisma.session.create).toHaveBeenCalledWith({});
+      expect(prisma.session.create).toHaveBeenCalledWith({ data: {} });
       expect(result).toEqual(mockSession);
     });
 

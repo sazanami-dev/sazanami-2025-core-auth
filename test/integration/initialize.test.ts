@@ -7,6 +7,23 @@ import prisma from "@/prisma";
 
 const INITIALIZE_REG_PATH = '/initialize';
 
+function expectRedirectToErrorPage(response: request.Response, expected: { code: string; message?: string; detail?: string; }) {
+  expect(response.status).toBe(302);
+  expect(response.headers.location).toBeDefined();
+
+  const redirectedUrl = new URL(response.headers.location);
+  const errorBase = new URL(EnvUtil.get(EnvKey.ERROR_PAGE));
+
+  expect(`${redirectedUrl.origin}${redirectedUrl.pathname}`).toBe(`${errorBase.origin}${errorBase.pathname}`);
+  expect(redirectedUrl.searchParams.get('code')).toBe(expected.code);
+  if (expected.message) {
+    expect(redirectedUrl.searchParams.get('message')).toBe(expected.message);
+  }
+  if (expected.detail) {
+    expect(redirectedUrl.searchParams.get('detail')).toBe(expected.detail);
+  }
+}
+
 beforeEach(async () => {
   vitest.mock('@prisma/client');
   await prisma.user.create({
@@ -56,12 +73,12 @@ describe('Initialization with invalid registration code', async () => {
         .get(INITIALIZE_REG_PATH);
     });
 
-    test('should respond with 400 Bad Request', () => {
-      expect(response.status).toBe(400);
-    });
-    test('should return error message about missing regCode', () => {
-      expect(response.body).toBeDefined();
-      expect(response.body.message).toBe('regCode query parameter is required');
+    test('should redirect to error page explaining the missing regCode', () => {
+      expectRedirectToErrorPage(response, {
+        code: 'REQUIRED_PARAMETER_MISSING',
+        message: '必須パラメーターが欠落しています。',
+        detail: 'regCode query parameter is required!',
+      });
     });
   });
 
@@ -73,12 +90,66 @@ describe('Initialization with invalid registration code', async () => {
         .get(INITIALIZE_REG_PATH)
         .query({ regCode: 'invalid-code' });
     });
-    test('should respond with 400 Bad Request', () => {
-      expect(response.status).toBe(400);
+    test('should redirect to error page explaining the invalid regCode', () => {
+      expectRedirectToErrorPage(response, {
+        code: 'INVALID_REGCODE',
+        message: '無効な登録コードです。',
+        detail: 'regCode is invalid or expired.',
+      });
     });
-    test('should return error message about invalid regCode', () => {
-      expect(response.body).toBeDefined();
-      expect(response.body.message).toBe('Invalid regCode');
+  });
+
+  describe('when user is already initialized and has a pending redirect', () => {
+    const initializedUser = {
+      ...fixtures.users.user2,
+      isInitialized: true,
+    };
+    const initializedSession = {
+      id: 'initialized-session-1',
+      userId: initializedUser.id,
+    };
+    const initializedRegCode = {
+      code: 'INITIALIZED',
+      userId: initializedUser.id,
+    };
+    const pendingRedirectBase = {
+      id: 'pending-initialized',
+      sessionId: initializedSession.id,
+      redirectUrl: 'https://example.com/pending-redirect',
+      postbackUrl: null,
+      state: 'pending-state',
+    };
+
+    let app, response: request.Response;
+    beforeEach(async () => {
+      await prisma.user.create({ data: initializedUser });
+      await prisma.registrationCode.create({ data: initializedRegCode });
+      await prisma.session.create({ data: initializedSession });
+      await prisma.pendingRedirect.create({
+        data: {
+          ...pendingRedirectBase,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        }
+      });
+
+      app = await createApp();
+      response = await request(app)
+        .get(INITIALIZE_REG_PATH)
+        .set('Cookie', [`sessionId=${initializedSession.id}`])
+        .query({ regCode: initializedRegCode.code });
+    });
+
+    test('should immediately send the user back to /redirect to resume the flow', () => {
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe('/redirect');
+    });
+
+    test('should keep reusing the existing authenticated session', () => {
+      const cookieHeader = response.headers['set-cookie'] as string[] | undefined;
+      expect(cookieHeader).toBeDefined();
+      const sessionCookie = cookieHeader!.find((cookie: string) => cookie.startsWith('sessionId='));
+      expect(sessionCookie).toBeDefined();
+      expect(sessionCookie).toContain(`sessionId=${initializedSession.id}`);
     });
   });
 });
