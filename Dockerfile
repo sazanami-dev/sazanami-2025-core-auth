@@ -4,7 +4,11 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm run install
+COPY ./frontend/package*.json ./frontend/
+
+COPY ./src/routes/manage/frontend/package*.json ./src/routes/manage/frontend/
+
+RUN npm run install:full
 
 COPY . .
 
