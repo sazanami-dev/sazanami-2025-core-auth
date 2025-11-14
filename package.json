@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "install": "npm install --prefix frontend && npm install",
+    "install:full": "npm install && cd frontend && npm install && cd .. && cd src/routes/manage/frontend && npm install",
     "start": "dotenv -e .env -- node --import=extensionless/register ./dist/src/index.js",
     "test": "vitest",
     "dev": "npm run dev:full",
