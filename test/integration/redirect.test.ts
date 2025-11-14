@@ -4,6 +4,7 @@ import { expect, test, beforeEach, afterEach, vitest, describe } from "vitest";
 import prisma from "@/prisma";
 import { fixtures } from "test/fixtures";
 import { EnvUtil, EnvKey } from "@/utils/env-util";
+import type { Express } from "express";
 
 const REDIRECT_PATH = '/redirect';
 
@@ -67,7 +68,7 @@ describe('Redirect route', () => {
   });
 
   describe('when pending redirect exists without postbackUrl', () => {
-    let app, response: request.Response;
+    let app: Express, response: request.Response;
     beforeEach(async () => {
       await prisma.pendingRedirect.create({
         data: {
@@ -110,7 +111,7 @@ describe('Redirect route', () => {
   });
 
   describe('when pending redirect includes postbackUrl', () => {
-    let app, response: request.Response, fetchMock: ReturnType<typeof vitest.spyOn>;
+    let app: Express, response: request.Response, fetchMock: ReturnType<typeof vitest.spyOn<typeof globalThis, 'fetch'>> | undefined;
     beforeEach(async () => {
       await prisma.pendingRedirect.create({
         data: {
@@ -123,7 +124,7 @@ describe('Redirect route', () => {
         }
       });
 
-      fetchMock = vitest.spyOn(global, 'fetch').mockResolvedValue({
+      fetchMock = vitest.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({ success: true }),

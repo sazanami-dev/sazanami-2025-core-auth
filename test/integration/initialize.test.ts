@@ -4,6 +4,7 @@ import { EnvUtil, EnvKey } from "@/utils/env-util";
 import { expect, test, beforeEach, vitest, describe } from 'vitest';
 import { fixtures } from "test/fixtures";
 import prisma from "@/prisma";
+import type { Express } from "express";
 
 const INITIALIZE_REG_PATH = '/initialize';
 
@@ -36,7 +37,7 @@ beforeEach(async () => {
 });
 
 describe('Initialization with valid registration code', async () => {
-  let app, response: request.Response;
+  let app: Express, response: request.Response;
   beforeEach(async () => {
     app = await createApp();
     response = await request(app)
@@ -66,7 +67,7 @@ describe('Initialization with valid registration code', async () => {
 
 describe('Initialization with invalid registration code', async () => {
   describe('when regCode is missing', () => {
-    let app, response: request.Response;
+    let app: Express, response: request.Response;
     beforeEach(async () => {
       app = await createApp();
       response = await request(app)
@@ -83,7 +84,7 @@ describe('Initialization with invalid registration code', async () => {
   });
 
   describe('when regCode is invalid', () => {
-    let app, response: request.Response;
+    let app: Express, response: request.Response;
     beforeEach(async () => {
       app = await createApp();
       response = await request(app)
@@ -120,7 +121,7 @@ describe('Initialization with invalid registration code', async () => {
       state: 'pending-state',
     };
 
-    let app, response: request.Response;
+    let app: Express, response: request.Response;
     beforeEach(async () => {
       await prisma.user.create({ data: initializedUser });
       await prisma.registrationCode.create({ data: initializedRegCode });
@@ -145,7 +146,8 @@ describe('Initialization with invalid registration code', async () => {
     });
 
     test('should keep reusing the existing authenticated session', () => {
-      const cookieHeader = response.headers['set-cookie'] as string[] | undefined;
+      const rawCookieHeader = response.headers['set-cookie'];
+      const cookieHeader = Array.isArray(rawCookieHeader) ? rawCookieHeader : rawCookieHeader ? [rawCookieHeader] : undefined;
       expect(cookieHeader).toBeDefined();
       const sessionCookie = cookieHeader!.find((cookie: string) => cookie.startsWith('sessionId='));
       expect(sessionCookie).toBeDefined();
