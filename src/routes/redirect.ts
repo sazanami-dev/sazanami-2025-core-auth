@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getPendingRedirect } from "@/services/auth/pending-redirect";
+import { deletePendingRedirect, getPendingRedirect } from "@/services/auth/pending-redirect";
 import { DoResponse } from "@/utils/do-resnpose";
 import { issueToken, makeClaimsHelper } from "@/services/auth/token";
 import { makeErrorPageUrlHelper } from "@/utils/make-error-page-url-helper";
@@ -19,17 +19,28 @@ router.get('/', async (req, res) => {
 
   try {
     pendingRedirect = await getPendingRedirect(sessionId);
-    if (!pendingRedirect) {
-      const errorPageUrl = makeErrorPageUrlHelper('PENDING_REDIRECT_NOT_FOUND', '保留中のリダイレクトが見つかりません。', 'No pending redirect found for this session or it has expired.');
-      return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
-    }
   } catch (e) {
-    return;
+    logger.error(`Failed to fetch pending redirect: ${e}`);
+    const errorPageUrl = makeErrorPageUrlHelper('PENDING_REDIRECT_FETCH_FAILED', 'リダイレクト情報の取得に失敗しました。', 'Failed to retrieve pending redirect.');
+    return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
+  }
+
+  if (!pendingRedirect) {
+    const errorPageUrl = makeErrorPageUrlHelper('PENDING_REDIRECT_NOT_FOUND', '保留中のリダイレクトが見つかりません。', 'No pending redirect found for this session or it has expired.');
+    return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
 
   const { redirectUrl, postbackUrl, state } = pendingRedirect;
 
   // このへんのロジックがauthenticate.tsと重複しているので共通化したい
+
+  const cleanupPendingRedirect = async () => {
+    try {
+      await deletePendingRedirect(pendingRedirect!.id);
+    } catch (err) {
+      logger.error(`Failed to delete pending redirect ${pendingRedirect!.id}: ${err}`);
+    }
+  };
 
   // Validate redirectUrl and postbackUrl
   try {
@@ -37,6 +48,7 @@ router.get('/', async (req, res) => {
     if (postbackUrl) new URL(postbackUrl!);
   } catch (e) {
     logger.error(`URL validation failed: ${e}`);
+    await cleanupPendingRedirect();
     const errorPageUrl = makeErrorPageUrlHelper('INVALID_URL', '無効なURLです。', 'redirectUrl or postbackUrl is not a valid URL.');
     return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
@@ -57,20 +69,30 @@ router.get('/', async (req, res) => {
         }),
       });
     } catch (e) {
+      await cleanupPendingRedirect();
       const errorPageUrl = makeErrorPageUrlHelper('POSTBACK_FAILED', '連携先との接続に失敗しました。', 'Failed to postback to the specified URL.');
       return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
     }
   }
 
-  // Redirect
-  const url = new URL(redirectUrl!);
-  if (!postbackUrl) {
-    url.searchParams.append('token', token);
-    if (state) {
-      url.searchParams.append('state', state);
+  try {
+    // Redirect
+    const url = new URL(redirectUrl!);
+    if (!postbackUrl) {
+      url.searchParams.append('token', token);
+      if (state) {
+        url.searchParams.append('state', state);
+      }
     }
+
+    await cleanupPendingRedirect();
+    return DoResponse.init(res).redirect(url.toString()).send();
+  } catch (e) {
+    await cleanupPendingRedirect();
+    logger.error(`Failed to redirect: ${e}`);
+    const errorPageUrl = makeErrorPageUrlHelper('REDIRECT_FAILED', 'リダイレクトに失敗しました。', 'Failed to process redirect.');
+    return DoResponse.init(res).redirect(errorPageUrl.toString()).send();
   }
-  return DoResponse.init(res).redirect(url.toString()).send();
 
 });
 
