@@ -3,6 +3,15 @@ import { createApp } from "@/app";
 import { beforeEach, afterEach, describe, expect, test, vitest } from "vitest";
 import prisma from "@/prisma";
 import { fixtures } from "test/fixtures";
+import { EnvKey, EnvUtil } from "@/utils/env-util";
+
+function expectRedirectToError(response: request.Response, code: string) {
+  expect(response.status).toBe(302);
+  const errorUrl = new URL(response.headers.location);
+  const base = new URL(EnvUtil.get(EnvKey.ERROR_PAGE));
+  expect(`${errorUrl.origin}${errorUrl.pathname}`).toBe(`${base.origin}${base.pathname}`);
+  expect(errorUrl.searchParams.get('code')).toBe(code);
+}
 
 describe('Potentially problematic behaviors', () => {
   beforeEach(async () => {
@@ -78,7 +87,7 @@ describe('Potentially problematic behaviors', () => {
       });
     });
 
-    test('allows the same pending redirect to be replayed multiple times (BUG)', async () => {
+    test('consumes pending redirect so it cannot be replayed', async () => {
       const app = await createApp();
 
       const first = await request(app)
@@ -90,13 +99,13 @@ describe('Potentially problematic behaviors', () => {
       const pendingAfterFirst = await prisma.pendingRedirect.findUnique({
         where: { id: 'pending-replay' },
       });
-      expect(pendingAfterFirst).not.toBeNull();
+      expect(pendingAfterFirst).toBeNull();
 
       const second = await request(app)
         .get('/redirect')
         .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
 
-      expect(second.status).toBe(302);
+      expectRedirectToError(second, 'PENDING_REDIRECT_NOT_FOUND');
     });
   });
 });

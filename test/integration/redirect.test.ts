@@ -88,6 +88,25 @@ describe('Redirect route', () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toMatch(/^https:\/\/example.com\/redirect\?token=.+&state=xyz$/);
     });
+
+    test('should delete the pending redirect after successful handoff', async () => {
+      const pending = await prisma.pendingRedirect.findUnique({
+        where: { id: 'pending-redirect-without-postback' },
+      });
+      expect(pending).toBeNull();
+    });
+
+    test('should reject subsequent calls once the pending redirect is consumed', async () => {
+      const second = await request(app)
+        .get(REDIRECT_PATH)
+        .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+
+      expectRedirectToErrorPage(second, {
+        code: 'PENDING_REDIRECT_NOT_FOUND',
+        message: '保留中のリダイレクトが見つかりません。',
+        detail: 'No pending redirect found for this session or it has expired.',
+      });
+    });
   });
 
   describe('when pending redirect includes postbackUrl', () => {
@@ -157,5 +176,22 @@ describe('Redirect route', () => {
       message: '無効なURLです。',
       detail: 'redirectUrl or postbackUrl is not a valid URL.',
     });
+  });
+
+  test('should show error page when fetching pending redirect throws', async () => {
+    const spy = vitest.spyOn(prisma.pendingRedirect, 'findFirst').mockRejectedValue(new Error('DB down'));
+
+    const app = await createApp();
+    const response = await request(app)
+      .get(REDIRECT_PATH)
+      .set('Cookie', [`sessionId=${fixtures.sessions.session1.id}`]);
+
+    expectRedirectToErrorPage(response, {
+      code: 'PENDING_REDIRECT_FETCH_FAILED',
+      message: 'リダイレクト情報の取得に失敗しました。',
+      detail: 'Failed to retrieve pending redirect.',
+    });
+
+    spy.mockRestore();
   });
 });
