@@ -16,4 +16,4 @@ RUN npm run build
 
 RUN npm run db:push
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "db:push", "&&", "npm", "start"]
