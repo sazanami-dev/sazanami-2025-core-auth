@@ -1,7 +1,6 @@
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { Image } from "@heroui/image";
-import { Link } from "@heroui/link";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
 import { PiArrowSquareOutDuotone } from "react-icons/pi";
@@ -41,7 +40,12 @@ export default function SiteLinkCard(props: SiteLinkCardProps) {
           <p className="text-small text-default-500">{siteUrl}</p>
         </div>
         <div className="ml-auto flex items-center">
-          <Button variant="bordered" size="md" isIconOnly onPress={() => onJumpClicked(linkUrl)}>
+          <Button variant="bordered" size="md" isIconOnly onPress={() => {
+            if (onJumpClicked) {
+              onJumpClicked(linkUrl)
+            }
+          }
+          }>
             <PiArrowSquareOutDuotone className="text-lg" />
           </Button>
         </div>

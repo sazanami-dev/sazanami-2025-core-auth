@@ -1,8 +1,6 @@
 "use client";
 import { Button } from '@heroui/button';
-import { Input } from '@heroui/input';
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/modal';
-import { useEffect, useState } from 'react';
 
 type RequireAuthModalProps = {
   isOpen: boolean;
