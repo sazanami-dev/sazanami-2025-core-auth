@@ -3,14 +3,14 @@ import { Input } from "@heroui/input"
 import { Button } from "@heroui/button"
 import { useEffect, useState } from "react"
 import { VerifyResponseSchema } from "@/types/api/verify"
-import { TokenClaims } from "@/types/tokenClaims"
+// import { TokenClaims } from "@/types/tokenClaims"
 import useApi from "@/hooks/useApi"
 import { IResponseSchema } from "@/types/api/i"
 
 export default function InitializePage() {
 
   const token = new URLSearchParams(window.location.search).get("token") || ""
-  const [claims, setClaims] = useState<TokenClaims | null>(null)
+  // const [claims, setClaims] = useState<TokenClaims | null>(null)
   const [isWaitingVerify, setWaitingVerify] = useState<boolean>(true)
   const [isVaidToken, setVaidToken] = useState<boolean>(false)
 
@@ -34,7 +34,7 @@ export default function InitializePage() {
         if (parsed.success) {
           setVaidToken(parsed.data.valid)
           if (parsed.data.valid && parsed.data.payload) {
-            setClaims(parsed.data.payload)
+            // setClaims(parsed.data.payload)
           }
         } else {
           console.error("Invalid response schema:", parsed.error)
@@ -117,23 +117,23 @@ export default function InitializePage() {
       </div>
 
       {/* Debug Info */}
-      <div className="fixed bottom-0 left-0 w-full text-left text-xs text-gray-500 mb-2 ml-2 pointer-events-none select-none">
-        <p className="mb-1">[Debug Info]</p>
-        Token: {token || "<none>"}
-        <br />
-        isWaitingVerify: {isWaitingVerify ? "true" : "false"}
-        <br />
-        isVaidToken: {isVaidToken ? "true" : "false"}
-        <br />
-        Claims:
-        <ul>
-          {claims ? Object.entries(claims).map(([key, value]) => (
-            <li key={key} className="pl-2">
-              - {key}: {value?.toString() || "<none>"}
-            </li>
-          )) : "<none>"}
-        </ul>
-      </div>
+      {/* <div className="fixed bottom-0 left-0 w-full text-left text-xs text-gray-500 mb-2 ml-2 pointer-events-none select-none"> */}
+      {/*   <p className="mb-1">[Debug Info]</p> */}
+      {/*   Token: {token || "<none>"} */}
+      {/*   <br /> */}
+      {/*   isWaitingVerify: {isWaitingVerify ? "true" : "false"} */}
+      {/*   <br /> */}
+      {/*   isVaidToken: {isVaidToken ? "true" : "false"} */}
+      {/*   <br /> */}
+      {/*   Claims: */}
+      {/*   <ul> */}
+      {/*     {claims ? Object.entries(claims).map(([key, value]) => ( */}
+      {/*       <li key={key} className="pl-2"> */}
+      {/*         - {key}: {value?.toString() || "<none>"} */}
+      {/*       </li> */}
+      {/*     )) : "<none>"} */}
+      {/*   </ul> */}
+      {/* </div> */}
     </div>
   </>
 }
